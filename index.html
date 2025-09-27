@@ -10,92 +10,75 @@
       margin: 0; padding: 0;
       overflow: hidden; background-color: #f0f0f0;
     }
-    body {
-      display: flex; justify-content: center; align-items: center;
-      font-family: sans-serif;
-    }
-    #game-enclosure { text-align: center; }
-    .controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    body { display:flex; justify-content:center; align-items:center; font-family:sans-serif; }
+    #game-enclosure { text-align:center; }
+
+    /* Controls: Restart above canvas */
+    .controls { margin-bottom: 8px; }
     button {
       background: linear-gradient(145deg,#e6e6e6,#ffffff);
       border: 1px solid #dcdcdc; border-radius: 8px;
       box-shadow: 2px 2px 5px #cccccc,-2px -2px 5px #ffffff;
-      padding: 8px 16px; font-size: 16px; cursor: pointer;
-      transition: all .2s ease-in-out;
+      padding: 6px 12px; font-size: 15px; cursor:pointer;
     }
-    button:hover { background: linear-gradient(145deg,#d4d4d4,#f0f0f0); box-shadow: 4px 4px 10px #b0b0b0,-4px -4px 10px #ffffff; }
-    button:active { background:#e0e0e0; box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff; }
+    button:active { background:#e0e0e0; }
 
-    /* Square canvas always fully visible in portrait & landscape */
     canvas {
-      display:block; margin:0 auto 8px auto;
-      width:92vmin; height:92vmin;  /* vmin keeps full square on screen */
+      display:block; margin:0 auto;
+      width:92vmin; height:92vmin;
       max-width:500px; max-height:500px;
       border:2px solid black; background:#fff;
       touch-action:none;
     }
-    /* Slightly larger on landscape phones but still fully visible */
-    @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
-      canvas { width:96vmin !important; height:96vmin !important; max-width:none; max-height:none; }
-      .controls { transform: scale(0.95); }
+    @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
+      canvas { width:96vmin; height:96vmin; max-width:none; max-height:none; }
     }
 
+    /* Modal */
     #instructionsModal {
       display:none; position:fixed; z-index:3; inset:0;
       background:rgba(0,0,0,0.4);
     }
     .modal-content {
       background:#fff; margin:12% auto; padding:20px; border:1px solid #888;
-      width:80%; max-width:500px; position:relative; border-radius:10px;
+      width:80%; max-width:500px; border-radius:10px; position:relative;
     }
-    #closeButton { color:#aaa; position:absolute; right:12px; top:8px; font-size:28px; font-weight:bold; cursor:pointer; }
-    #closeButton:hover { color:#000; }
+    #closeButton { position:absolute; right:12px; top:8px; font-size:24px; cursor:pointer; }
 
-    /* ===== Mobile on-screen controls ===== */
+    /* Mobile controls */
     .touch-ui { display:none; }
-    @media (hover: none) and (pointer: coarse) {
+    @media (hover:none) and (pointer:coarse) {
       .touch-ui { display:block; }
-
-      #jumpArea, #joystickArea {
-        position: fixed; z-index: 4; touch-action: none; background: transparent;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right)
-                 env(safe-area-inset-bottom) env(safe-area-inset-left);
-      }
-      /* Left: smaller jump rectangle */
       #jumpArea {
-        left: 0; top: 0; bottom: 0; width: 24vw; max-width: 300px; min-width: 120px;
-        border: 2px solid rgba(0,0,0,0.18);
-        border-radius: 12px; box-sizing: border-box;
+        position:fixed; left:0; top:0; bottom:0;
+        width:16vw; max-width:140px; min-width:80px;
+        border:2px solid rgba(0,0,0,0.15);
+        border-radius:10px; z-index:4;
       }
-      /* Right: joystick zone */
       #joystickArea {
-        right: 0; top: 0; bottom: 0; width: 42vw; max-width: 480px;
+        position:fixed; right:0; top:0; bottom:0;
+        width:40vw; max-width:400px; z-index:4;
       }
-
-      /* Joystick visuals — fixed position, always visible */
       #joyBase, #joyStick {
-        position: fixed; border-radius: 50%;
-        transform: translate(-50%, -50%); pointer-events: none;
+        position:fixed; border-radius:50%;
+        transform:translate(-50%,-50%);
+        pointer-events:none;
       }
       #joyBase {
-        width: 26vmin; height: 26vmin; max-width: 220px; max-height: 220px;
-        border: 2px solid rgba(0,0,0,0.15);
-        background: rgba(0,0,0,0.04);
-        z-index: 4; opacity: 0.5;
+        width:22vmin; height:22vmin; max-width:180px; max-height:180px;
+        border:2px solid rgba(0,0,0,0.2);
+        background:rgba(0,0,0,0.05); opacity:0.5;
       }
       #joyStick {
-        width: 12vmin; height: 12vmin; max-width: 110px; max-height: 110px;
-        border: 2px solid rgba(0,0,0,0.15);
-        background: rgba(0,0,0,0.08);
-        z-index: 4; opacity: 0.85;
+        width:10vmin; height:10vmin; max-width:90px; max-height:90px;
+        border:2px solid rgba(0,0,0,0.25);
+        background:rgba(0,0,0,0.1); opacity:0.85;
       }
     }
   </style>
 </head>
 <body>
   <div id="game-enclosure">
-    <h1>Laser Jump</h1>
-    <!-- Controls: Restart first; Pause removed -->
     <div class="controls">
       <button id="restartButton" style="display:none;">Restart</button>
       <button id="instructionsButton">Instructions</button>
@@ -104,26 +87,27 @@
     <canvas id="gameCanvas" width="500" height="500"></canvas>
   </div>
 
-  <!-- Mobile UI overlays -->
-  <div class="touch-ui" id="jumpArea" aria-label="Jump"></div>
-  <div class="touch-ui" id="joystickArea" aria-label="Joystick area"></div>
+  <!-- Mobile overlays -->
+  <div class="touch-ui" id="jumpArea"></div>
+  <div class="touch-ui" id="joystickArea"></div>
   <div class="touch-ui" id="joyBase"></div>
   <div class="touch-ui" id="joyStick"></div>
 
+  <!-- Instructions -->
   <div id="instructionsModal">
     <div class="modal-content">
       <span id="closeButton">&times;</span>
       <h2>How to Play</h2>
       <ul>
         <li>Desktop: arrow keys to move, Space to jump.</li>
-        <li>Mobile: right-side joystick to move, left rectangle to jump.</li>
-        <li>Collect coins; in Hard mode, each coin adds a laser.</li>
+        <li>Mobile: right joystick to move, left rectangle to jump.</li>
+        <li>Collect coins to score; in Hard mode each coin adds a laser.</li>
       </ul>
     </div>
   </div>
 
 <script>
-/* ===== Core setup ===== */
+/* ===== Setup ===== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
@@ -131,288 +115,126 @@ const instructionsButton = document.getElementById('instructionsButton');
 const difficultyButton = document.getElementById('difficultyButton');
 const instructionsModal = document.getElementById('instructionsModal');
 const closeButton = document.getElementById('closeButton');
-
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 const gameResolution = 500;
-const gridSize = 25;
 canvas.width = canvas.height = gameResolution;
-
-let player = {
-  x: gameResolution/2, y: gameResolution/2,
-  radius: gridSize/2,
-  speed: isMobile ? 6 : 3,  // keep original per-frame feel
-  vx: 0, vy: 0,
-  color: 'blue',
-  isJumping: false,
-  jumpStartTime: 0,
-  jumpDuration: 500,
-};
-let lasers = [];
-let coin = { x: 0, y: 0, radius: gridSize/2, color: 'gold' };
-let score = 0, gameOver = false, paused = false, hardMode = true;
-const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false };
+let player = {x:250,y:250,radius:12,speed:isMobile?6:3,vx:0,vy:0,color:'blue',isJumping:false,jumpStartTime:0,jumpDuration:500};
+let lasers=[], coin={x:0,y:0,radius:12,color:'gold'}, score=0, gameOver=false, paused=false, hardMode=true;
+const keys={ArrowUp:false,ArrowDown:false,ArrowLeft:false,ArrowRight:false};
 
 function resetGame(){
-  player.x = gameResolution/2; player.y = gameResolution/2;
-  player.vx = 0; player.vy = 0; player.isJumping = false; player.color = 'blue';
-  lasers = [
-    { y: 50, vy: 1.5, height: 5, color: 'red' },
-    { x: 50, vx: 1.5, width: 5,  color: 'red' }
-  ];
-  score = 0; gameOver = false; paused = false;
-  spawnCoin();
-  restartButton.style.display = 'none';
+  player.x=250; player.y=250; player.vx=0; player.vy=0; player.isJumping=false; player.color='blue';
+  lasers=[{y:50,vy:1.5,height:5,color:'red'},{x:50,vx:1.5,width:5,color:'red'}];
+  score=0; gameOver=false; paused=false;
+  spawnCoin(); restartButton.style.display='none';
 }
-restartButton.addEventListener('click', ()=>{ resetGame(); startGame(); });
-difficultyButton.addEventListener('click', ()=>{
-  hardMode = !hardMode;
-  difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
-});
+restartButton.addEventListener('click',()=>{resetGame();startGame();});
+difficultyButton.addEventListener('click',()=>{hardMode=!hardMode; difficultyButton.textContent=`Mode: ${hardMode?'Hard':'Easy'}`;});
+instructionsButton.addEventListener('click',()=>{paused=true; instructionsModal.style.display='block';});
+closeButton.addEventListener('click',()=>{instructionsModal.style.display='none'; if(paused){paused=false;update();}});
 
-function startGame(){ update(); }
+function spawnCoin(){
+  const pad=coin.radius*2;
+  coin.x=pad+Math.random()*(canvas.width-2*pad);
+  coin.y=pad+Math.random()*(canvas.height-2*pad);
+}
+function startGame(){update();}
 function runCountdown(){
-  let count = 3;
-  (function tick(){
-    draw();
-    if (count>0){
-      ctx.fillStyle='black'; ctx.font='120px Arial';
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(count, canvas.width/2, canvas.height/2);
-      count--; setTimeout(tick,700);
-    } else { ctx.textBaseline='alphabetic'; startGame(); }
+  let count=3;(function tick(){draw();
+    if(count>0){ctx.fillStyle='black';ctx.font='100px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(count,250,250);count--;setTimeout(tick,700);}
+    else{ctx.textBaseline='alphabetic';startGame();}
   })();
 }
 
-/* Modal acts like pause (no pause button needed) */
-instructionsButton.addEventListener('click', ()=>{ paused=true; instructionsModal.style.display='block'; });
-closeButton.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } });
-window.addEventListener('click', (e)=>{ if (e.target===instructionsModal){ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } } });
-
-function spawnCoin(){
-  const pad = coin.radius*2;
-  coin.x = pad + Math.random()*(canvas.width - 2*pad);
-  coin.y = pad + Math.random()*(canvas.height - 2*pad);
-}
-
-/* ===== Desktop keyboard ===== */
-document.addEventListener('keydown', e=>{
-  if (gameOver){
-    if (e.key==='Enter'){ resetGame(); startGame(); }
-    return;
-  }
-  if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
-  if (e.key===' ' || e.key==='Spacebar'){
-    if (!player.isJumping){
-      player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
-    }
-  }
+/* Keyboard */
+document.addEventListener('keydown',e=>{
+  if(gameOver && e.key==='Enter'){resetGame();startGame();return;}
+  if(keys.hasOwnProperty(e.key))keys[e.key]=true;
+  if(e.key===' '&&!player.isJumping){player.isJumping=true;player.jumpStartTime=Date.now();player.color='lightblue';}
 });
-document.addEventListener('keyup', e=>{ if (keys.hasOwnProperty(e.key)) keys[e.key]=false; });
+document.addEventListener('keyup',e=>{if(keys.hasOwnProperty(e.key))keys[e.key]=false;});
 
-/* ===== Mobile on-screen controls (smaller jump + smoother joystick) ===== */
-const jumpArea = document.getElementById('jumpArea');
-const joystickArea = document.getElementById('joystickArea');
-const joyBase = document.getElementById('joyBase');
-const joyStick = document.getElementById('joyStick');
+/* Mobile controls */
+const jumpArea=document.getElementById('jumpArea');
+const joystickArea=document.getElementById('joystickArea');
+const joyBase=document.getElementById('joyBase');
+const joyStick=document.getElementById('joyStick');
+let joyCenter={x:0,y:0}, joyMax=100, joyTargetVx=0, joyTargetVy=0;
 
-let joyActive = false;
-let joyId = null;
-let joyCenter = { x: 0, y: 0 };
-let joyMax = 100;                 // bigger throw for finer control
-let joyTargetVx = 0, joyTargetVy = 0;
-
-function placeJoystickDefault(){
-  // Bottom-center of the right zone
-  const r = joystickArea.getBoundingClientRect();
-  joyCenter.x = r.left + r.width * 0.5;
-  joyCenter.y = r.top  + r.height * 0.80;
-  joyBase.style.left = joyCenter.x + 'px';
-  joyBase.style.top  = joyCenter.y + 'px';
-  joyStick.style.left = joyCenter.x + 'px';
-  joyStick.style.top  = joyCenter.y + 'px';
+function placeJoystick(){
+  const r=joystickArea.getBoundingClientRect();
+  joyCenter.x=r.left+r.width*0.5; joyCenter.y=r.top+r.height*0.8;
+  joyBase.style.left=joyCenter.x+'px'; joyBase.style.top=joyCenter.y+'px';
+  joyStick.style.left=joyCenter.x+'px'; joyStick.style.top=joyCenter.y+'px';
 }
-function adjustJoyMax(){
-  const unit = Math.min(window.innerWidth, window.innerHeight);
-  joyMax = Math.max(80, Math.min(130, unit * 0.12));
+function resizeJoy(){joyMax=Math.min(window.innerWidth,window.innerHeight)*0.12; placeJoystick();}
+window.addEventListener('resize',resizeJoy); if(isMobile)resizeJoy();
+
+if(isMobile){
+  jumpArea.addEventListener('touchstart',()=>{if(!player.isJumping){player.isJumping=true;player.jumpStartTime=Date.now();player.color='lightblue';}}, {passive:false});
+  joystickArea.addEventListener('touchstart',e=>{
+    const t=e.changedTouches[0]; updateStick(t.clientX,t.clientY);
+  },{passive:false});
+  joystickArea.addEventListener('touchmove',e=>{
+    const t=e.changedTouches[0]; updateStick(t.clientX,t.clientY);
+  },{passive:false});
+  joystickArea.addEventListener('touchend',()=>{joyTargetVx=0;joyTargetVy=0;placeJoystick();},{passive:false});
 }
-function onResize(){ adjustJoyMax(); placeJoystickDefault(); }
-window.addEventListener('resize', onResize);
-if (isMobile) onResize();
-
-if (isMobile){
-  // Prevent page gestures inside control areas
-  [jumpArea, joystickArea].forEach(el=>{
-    ['touchstart','touchmove','touchend','touchcancel'].forEach(evt=>{
-      el.addEventListener(evt, e=>e.preventDefault(), {passive:false});
-    });
-  });
-
-  // Jump (left, smaller)
-  jumpArea.addEventListener('touchstart', ()=>{
-    if (gameOver || paused) return;
-    if (!player.isJumping){
-      player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
-      if (navigator.vibrate) navigator.vibrate(10);
-    }
-  }, {passive:false});
-
-  // Joystick
-  joystickArea.addEventListener('touchstart', e=>{
-    if (gameOver || paused) return;
-    const t = e.changedTouches[0];
-    joyId = t.identifier; joyActive = true;
-    updateStick(t.clientX, t.clientY);
-  }, {passive:false});
-  joystickArea.addEventListener('touchmove', e=>{
-    if (!joyActive) return;
-    let t = null;
-    for (let i=0;i<e.changedTouches.length;i++){
-      if (e.changedTouches[i].identifier === joyId){ t = e.changedTouches[i]; break; }
-    }
-    if (!t) return;
-    updateStick(t.clientX, t.clientY);
-  }, {passive:false});
-  function endJoystick(e){
-    if (!joyActive) return;
-    let ended = false;
-    for (let i=0;i<e.changedTouches.length;i++){
-      if (e.changedTouches[i].identifier === joyId){ ended = true; break; }
-    }
-    if (ended){
-      joyActive = false; joyId = null;
-      joyTargetVx = 0; joyTargetVy = 0;
-      joyStick.style.left = joyCenter.x + 'px';
-      joyStick.style.top  = joyCenter.y + 'px';
-    }
-  }
-  joystickArea.addEventListener('touchend', endJoystick, {passive:false});
-  joystickArea.addEventListener('touchcancel', endJoystick, {passive:false});
+function updateStick(cx,cy){
+  const dx=cx-joyCenter.x, dy=cy-joyCenter.y;
+  const mag=Math.hypot(dx,dy), capped=Math.min(mag,joyMax);
+  const ux=mag?dx/mag:0, uy=mag?dy/mag:0;
+  joyStick.style.left=(joyCenter.x+ux*capped)+'px';
+  joyStick.style.top=(joyCenter.y+uy*capped)+'px';
+  const factor=capped/joyMax; const spd=player.speed*(0.3+0.7*factor);
+  joyTargetVx=ux*spd; joyTargetVy=uy*spd;
 }
 
-function updateStick(cx, cy){
-  const dx = cx - joyCenter.x;
-  const dy = cy - joyCenter.y;
-  const mag = Math.hypot(dx, dy);
-  const capped = Math.min(mag, joyMax);
-  const ux = mag ? dx/mag : 0;
-  const uy = mag ? dy/mag : 0;
-
-  joyStick.style.left = (joyCenter.x + ux * capped) + 'px';
-  joyStick.style.top  = (joyCenter.y + uy * capped) + 'px';
-
-  // Target velocity (smoothly applied in update)
-  const speedFactor = capped / joyMax;
-  const currentSpeed = player.speed * (0.30 + 0.70 * speedFactor); // slightly smoother ramp
-  joyTargetVx = ux * currentSpeed;
-  joyTargetVy = uy * currentSpeed;
-}
-
-/* ===== Game loop (with velocity smoothing) ===== */
+/* Game loop */
 function checkCollisions(){
-  const dx = player.x - coin.x, dy = player.y - coin.y;
-  const distance = Math.sqrt(dx*dx + dy*dy);
-  if (distance < player.radius + coin.radius){
+  const dx=player.x-coin.x, dy=player.y-coin.y;
+  if(Math.hypot(dx,dy)<player.radius+coin.radius){
     score++; spawnCoin();
-    if (hardMode){
-      if (score % 2 !== 0){
-        lasers.push({ y: player.y < canvas.height/2 ? canvas.height - 5 : 0,
-                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1),
-                      height: 5, color: 'red' });
-      } else {
-        lasers.push({ x: player.x < canvas.width/2 ? canvas.width - 5 : 0,
-                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1),
-                      width: 5, color: 'red' });
-      }
+    if(hardMode){
+      if(score%2) lasers.push({y:player.y<250?495:0,vy:1.5*(Math.random()>.5?1:-1),height:5,color:'red'});
+      else lasers.push({x:player.x<250?495:0,vx:1.5*(Math.random()>.5?1:-1),width:5,color:'red'});
     }
   }
-  if (player.isJumping) return;
-
+  if(player.isJumping) return;
   lasers.forEach(l=>{
-    if (gameOver) return;
-    if (l.hasOwnProperty('vy')){
-      if (player.y + player.radius > l.y && player.y - player.radius < l.y + l.height) gameOver = true;
-    } else if (l.hasOwnProperty('vx')){
-      if (player.x + player.radius > l.x && player.x - player.radius < l.x + l.width) gameOver = true;
-    }
+    if(l.vy && player.y+player.radius>l.y && player.y-player.radius<l.y+l.height) gameOver=true;
+    if(l.vx && player.x+player.radius>l.x && player.x-player.radius<l.x+l.width) gameOver=true;
   });
 }
-
 function update(){
-  if (paused) return;
-  if (gameOver){
-    ctx.fillStyle='black'; ctx.font='50px Arial'; ctx.textAlign='center';
-    ctx.fillText('Game Over', canvas.width/2, canvas.height/2);
-    ctx.font='20px Arial'; ctx.fillText('Press Enter to restart', canvas.width/2, canvas.height/2 + 40);
-    restartButton.style.display='inline-block';
-    return;
-  }
+  if(paused)return;
+  if(gameOver){ctx.fillStyle='black';ctx.font='40px Arial';ctx.textAlign='center';ctx.fillText('Game Over',250,250);restartButton.style.display='inline-block';return;}
   requestAnimationFrame(update);
-
-  // Desktop keys
-  if (keys.ArrowUp)    player.y -= player.speed;
-  if (keys.ArrowDown)  player.y += player.speed;
-  if (keys.ArrowLeft)  player.x -= player.speed;
-  if (keys.ArrowRight) player.x += player.speed;
-
-  // Mobile joystick: ease actual velocity toward target
-  if (isMobile){
-    const ease = 0.20; // 0.12 smoother, 0.25 snappier
-    player.vx = player.vx * (1 - ease) + joyTargetVx * ease;
-    player.vy = player.vy * (1 - ease) + joyTargetVy * ease;
-    player.x += player.vx;
-    player.y += player.vy;
-  }
-
-  // Wrap-around
-  if (player.x < -player.radius) player.x = canvas.width + player.radius;
-  if (player.x > canvas.width + player.radius) player.x = -player.radius;
-  if (player.y < -player.radius) player.y = canvas.height + player.radius;
-  if (player.y > canvas.height + player.radius) player.y = -player.radius;
-
-  // Lasers
-  lasers.forEach(l=>{
-    if (l.hasOwnProperty('vy')){
-      l.y += l.vy;
-      if (l.y + l.height > canvas.height || l.y < 0) l.vy *= -1;
-    } else {
-      l.x += l.vx;
-      if (l.x + l.width > canvas.width || l.x < 0) l.vx *= -1;
-    }
-  });
-
-  // Jump timer
-  if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration){
-    player.isJumping = false; player.color = 'blue';
-  }
-
-  checkCollisions();
-  draw();
+  if(keys.ArrowUp)player.y-=player.speed;
+  if(keys.ArrowDown)player.y+=player.speed;
+  if(keys.ArrowLeft)player.x-=player.speed;
+  if(keys.ArrowRight)player.x+=player.speed;
+  if(isMobile){player.vx=player.vx*0.8+joyTargetVx*0.2; player.vy=player.vy*0.8+joyTargetVy*0.2; player.x+=player.vx; player.y+=player.vy;}
+  if(player.x<-player.radius)player.x=500+player.radius;
+  if(player.x>500+player.radius)player.x=-player.radius;
+  if(player.y<-player.radius)player.y=500+player.radius;
+  if(player.y>500+player.radius)player.y=-player.radius;
+  lasers.forEach(l=>{if(l.vy){l.y+=l.vy;if(l.y<0||l.y+5>500)l.vy*=-1;} else {l.x+=l.vx;if(l.x<0||l.x+5>500)l.vx*=-1;}});
+  if(player.isJumping&&Date.now()-player.jumpStartTime>player.jumpDuration){player.isJumping=false;player.color='blue';}
+  checkCollisions(); draw();
 }
-
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  ctx.fillStyle = player.color;
-  ctx.beginPath(); ctx.arc(player.x,player.y,player.radius,0,Math.PI*2); ctx.fill();
-
-  lasers.forEach(l=>{
-    ctx.fillStyle = l.color;
-    if (l.hasOwnProperty('vy')) ctx.fillRect(0, l.y, canvas.width, l.height);
-    else ctx.fillRect(l.x, 0, l.width, canvas.height);
-  });
-
-  ctx.fillStyle = coin.color;
-  ctx.beginPath(); ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI*2); ctx.fill();
-
-  ctx.fillStyle='black'; ctx.font='20px Arial'; ctx.textAlign='left';
-  ctx.fillText('Score: ' + score, 10, 25);
+  ctx.clearRect(0,0,500,500);
+  ctx.fillStyle='white'; ctx.fillRect(0,0,500,500);
+  ctx.fillStyle=player.color; ctx.beginPath(); ctx.arc(player.x,player.y,player.radius,0,Math.PI*2); ctx.fill();
+  lasers.forEach(l=>{ctx.fillStyle=l.color; if(l.vy)ctx.fillRect(0,l.y,500,l.height); else ctx.fillRect(l.x,0,l.width,500);});
+  ctx.fillStyle=coin.color; ctx.beginPath(); ctx.arc(coin.x,coin.y,coin.radius,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='black'; ctx.font='18px Arial'; ctx.fillText('Score: '+score,10,22);
 }
 
-/* Boot */
-resetGame();
-runCountdown();
+resetGame(); runCountdown();
 </script>
 </body>
 </html>
