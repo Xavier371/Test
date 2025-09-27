@@ -1,36 +1,448 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Triangle Chess Game</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Laser Jump</title>
+  <style>
+    html, body {
+      width: 100%; height: 100%;
+      margin: 0; padding: 0;
+      overflow: hidden; background-color: #f0f0f0;
+    }
+    body {
+      display: flex; justify-content: center; align-items: center;
+      font-family: sans-serif;
+    }
+    #game-enclosure { text-align: center; }
+    .controls { display: flex; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+    button {
+      background: linear-gradient(145deg,#e6e6e6,#ffffff);
+      border: 1px solid #dcdcdc; border-radius: 8px;
+      box-shadow: 2px 2px 5px #cccccc,-2px -2px 5px #ffffff;
+      padding: 10px 20px; font-size: 16px; cursor: pointer;
+      transition: all .2s ease-in-out; margin: 5px;
+    }
+    button:hover {
+      background: linear-gradient(145deg,#d4d4d4,#f0f0f0);
+      box-shadow: 4px 4px 10px #b0b0b0,-4px -4px 10px #ffffff;
+    }
+    button:active { background:#e0e0e0; box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff; }
+    canvas {
+      display:block; margin:0 auto 10px auto;
+      width:90vmin; height:90vmin; max-width:500px; max-height:500px;
+      border:2px solid black; background:#fff;
+      touch-action:none;
+    }
+    #instructionsModal {
+      display:none; position:fixed; z-index:1; inset:0;
+      background:rgba(0,0,0,0.4);
+    }
+    .modal-content {
+      background:#fff; margin:15% auto; padding:20px; border:1px solid #888;
+      width:80%; max-width:500px; position:relative;
+    }
+    #closeButton { color:#aaa; position:absolute; right:12px; top:8px; font-size:28px; font-weight:bold; cursor:pointer; }
+    #closeButton:hover { color:#000; }
+
+    /* ===== Mobile touch controls (portrait & landscape) ===== */
+    .touch-ui { display:none; }
+    @media (hover: none) and (pointer: coarse) {
+      .touch-ui {
+        display:block;
+      }
+      #jumpArea, #joystickArea {
+        position: fixed;
+        z-index: 5;
+        touch-action: none;
+        /* Respect safe areas */
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                 env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+      /* Left: jump rectangle */
+      #jumpArea {
+        left: 0; top: 0; bottom: 0;
+        width: 36vw; max-width: 360px;
+        background: rgba(0,0,0,0.0);
+      }
+      /* Right: joystick zone */
+      #joystickArea {
+        right: 0; top: 0; bottom: 0;
+        width: 40vw; max-width: 420px;
+        background: rgba(0,0,0,0.0);
+      }
+      /* Joystick visuals */
+      #joyBase {
+        position:absolute; width: 26vmin; height: 26vmin; max-width:220px; max-height:220px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.15);
+        background: rgba(0,0,0,0.04);
+        display: none; /* appears when touching */
+        transform: translate(-50%, -50%);
+      }
+      #joyStick {
+        position:absolute; width: 12vmin; height: 12vmin; max-width:110px; max-height:110px;
+        border-radius: 50%;
+        border: 2px solid rgba(0,0,0,0.15);
+        background: rgba(0,0,0,0.08);
+        display: none;
+        transform: translate(-50%, -50%);
+      }
+      /* Subtle hint for jump area */
+      #jumpHint {
+        position:absolute; left: 2.5vw; bottom: 6vh;
+        width: 24vmin; height: 12vmin; max-width: 220px; max-height: 110px;
+        border-radius: 14px;
+        border: 2px dashed rgba(0,0,0,0.12);
+        background: rgba(0,0,0,0.03);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="left-container">
-        <h1>Triangle Chess Game</h1>
-        <div class="button-container">
-            <button id="instructions-btn">Instructions</button>
-            <button id="mode-toggle-btn">One Player</button>
-        </div>
+  <div id="game-enclosure">
+    <h1>Laser Jump</h1>
+    <div class="controls">
+      <button id="pauseButton">Pause</button>
+      <button id="instructionsButton">Instructions</button>
+      <button id="difficultyButton">Mode: Hard</button>
     </div>
-    
-    <div class="right-container">
-        <div id="game-board"></div>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
+    <button id="restartButton" style="display:none;">Restart</button>
+  </div>
+
+  <!-- Touch UI (mobile-only) -->
+  <div class="touch-ui" id="jumpArea">
+    <div id="jumpHint"></div>
+  </div>
+  <div class="touch-ui" id="joystickArea">
+    <div id="joyBase"></div>
+    <div id="joyStick"></div>
+  </div>
+
+  <div id="instructionsModal">
+    <div class="modal-content">
+      <span id="closeButton">&times;</span>
+      <h2>How to Play</h2>
+      <ul>
+        <li>Use the <strong>arrow keys</strong> (desktop) or the <strong>on-screen joystick</strong> (mobile) to move.</li>
+        <li><strong>Jump</strong> with <strong>Space</strong> (desktop) or tap the <strong>left rectangle</strong> (mobile).</li>
+        <li>Collect gold coins to score points. In Hard, each coin adds a laser.</li>
+        <li>Game ends if you hit a laser. Press <strong>Enter</strong> or <strong>Restart</strong> to try again.</li>
+      </ul>
     </div>
-    
-    <div id="instructions-popup" class="popup hidden">
-        <div class="popup-content">
-            <h2>How to Play</h2>
-            <p>Move your triangles one square at a time (up, down, left, or right).</p>
-            <p>White pieces start at the bottom and try to reach the top row.</p>
-            <p>Black pieces start at the top and try to reach the bottom row.</p>
-            <p>You can capture opponent pieces by moving onto their square.</p>
-            <p>In one-player mode, you control the white pieces.</p>
-            <button id="close-instructions-btn">Close</button>
-        </div>
-    </div>
-    
-    <script src="game.js"></script>
+  </div>
+
+<script>
+/* ===== Core setup (unchanged gameplay) ===== */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const restartButton = document.getElementById('restartButton');
+const pauseButton = document.getElementById('pauseButton');
+const instructionsButton = document.getElementById('instructionsButton');
+const difficultyButton = document.getElementById('difficultyButton');
+const instructionsModal = document.getElementById('instructionsModal');
+const closeButton = document.getElementById('closeButton');
+
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+const gameResolution = 500;
+const gridSize = 25;
+canvas.width = canvas.height = gameResolution;
+
+let player = {
+  x: gameResolution/2, y: gameResolution/2,
+  radius: gridSize/2,
+  speed: isMobile ? 6 : 3,   // keep your original feel (per-frame style)
+  vx: 0, vy: 0,
+  color: 'blue',
+  isJumping: false,
+  jumpStartTime: 0,
+  jumpDuration: 500,
+};
+let lasers = [];
+let coin = { x:0, y:0, radius:gridSize/2, color:'gold' };
+let score = 0, gameOver = false, paused = false, hardMode = true;
+const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false };
+
+function resetGame(){
+  player.x = gameResolution/2; player.y = gameResolution/2;
+  player.vx = 0; player.vy = 0; player.isJumping = false; player.color = 'blue';
+  lasers = [
+    { y: 50, vy: 1.5, height: 5, color: 'red' },
+    { x: 50, vx: 1.5, width: 5,  color: 'red' }
+  ];
+  score = 0; gameOver = false; paused = false;
+  spawnCoin();
+  restartButton.style.display = 'none';
+  pauseButton.textContent = 'Pause';
+}
+restartButton.addEventListener('click', ()=>{ resetGame(); startGame(); });
+difficultyButton.addEventListener('click', ()=>{
+  hardMode = !hardMode;
+  difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
+});
+
+window.addEventListener('click', e=>{
+  if (e.target === instructionsModal){
+    instructionsModal.style.display = 'none';
+    if (paused) togglePause();
+  }
+});
+function startGame(){ update(); }
+function runCountdown(){
+  let count = 3;
+  (function tick(){
+    draw();
+    if (count>0){
+      ctx.fillStyle='black'; ctx.font='120px Arial';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(count, canvas.width/2, canvas.height/2);
+      count--; setTimeout(tick,700);
+    } else {
+      ctx.textBaseline='alphabetic'; startGame();
+    }
+  })();
+}
+function togglePause(){
+  paused = !paused;
+  pauseButton.textContent = paused ? 'Resume' : 'Pause';
+  if (!paused) update();
+}
+pauseButton.addEventListener('click', togglePause);
+instructionsButton.addEventListener('click', ()=>{ paused=true; pauseButton.textContent='Resume'; instructionsModal.style.display='block'; });
+closeButton.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused) togglePause(); });
+
+function spawnCoin(){
+  const pad = coin.radius*2;
+  coin.x = pad + Math.random()*(canvas.width - 2*pad);
+  coin.y = pad + Math.random()*(canvas.height - 2*pad);
+}
+
+/* ===== Desktop keyboard controls (unchanged) ===== */
+document.addEventListener('keydown', e=>{
+  if (gameOver){
+    if (e.key==='Enter'){ resetGame(); startGame(); }
+    return;
+  }
+  if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+  if (e.key===' ' || e.key==='Spacebar'){
+    if (!player.isJumping){
+      player.isJumping = true; player.jumpStartTime = Date.now(); player.color = 'lightblue';
+    }
+  }
+  if (e.key==='p' || e.key==='P'){ togglePause(); }
+});
+document.addEventListener('keyup', e=>{ if (keys.hasOwnProperty(e.key)) keys[e.key]=false; });
+
+/* ===== Mobile on-screen controls (joystick + jump) ===== */
+const jumpArea = document.getElementById('jumpArea');
+const joystickArea = document.getElementById('joystickArea');
+const joyBase = document.getElementById('joyBase');
+const joyStick = document.getElementById('joyStick');
+
+let joyActive = false;
+let joyId = null;
+let joyCenter = { x: 0, y: 0 };
+let joyMax = 80; // pixels radius for full deflection (auto-limited visually)
+
+function clientToCanvas(x, y){
+  const r = canvas.getBoundingClientRect();
+  const sx = canvas.width / r.width, sy = canvas.height / r.height;
+  return { x: (x - r.left) * sx, y: (y - r.top) * sy };
+}
+
+function showJoystick(cx, cy){
+  joyBase.style.left = cx + 'px';
+  joyBase.style.top  = cy + 'px';
+  joyStick.style.left = cx + 'px';
+  joyStick.style.top  = cy + 'px';
+  joyBase.style.display = 'block';
+  joyStick.style.display = 'block';
+}
+function hideJoystick(){
+  joyBase.style.display = 'none';
+  joyStick.style.display = 'none';
+}
+
+if (isMobile){
+  // Prevent page gestures in control areas
+  [jumpArea, joystickArea].forEach(el=>{
+    el.addEventListener('touchstart', e=>e.preventDefault(), {passive:false});
+    el.addEventListener('touchmove',  e=>e.preventDefault(), {passive:false});
+    el.addEventListener('touchend',   e=>e.preventDefault(), {passive:false});
+  });
+
+  // Jump (left rectangle)
+  jumpArea.addEventListener('touchstart', ()=>{
+    if (gameOver || paused) return;
+    if (!player.isJumping){
+      player.isJumping = true; player.jumpStartTime = Date.now(); player.color = 'lightblue';
+      if (navigator.vibrate) navigator.vibrate(10);
+    }
+  }, {passive:false});
+
+  // Joystick (right side)
+  joystickArea.addEventListener('touchstart', e=>{
+    if (gameOver || paused) return;
+    const t = e.changedTouches[0];
+    joyId = t.identifier; joyActive = true;
+    joyCenter.x = t.clientX; joyCenter.y = t.clientY;
+    showJoystick(joyCenter.x, joyCenter.y);
+    // zero velocity until moved
+    player.vx = 0; player.vy = 0;
+  }, {passive:false});
+
+  joystickArea.addEventListener('touchmove', e=>{
+    if (!joyActive) return;
+    let t = null;
+    for (let i=0;i<e.changedTouches.length;i++){
+      if (e.changedTouches[i].identifier === joyId){ t = e.changedTouches[i]; break; }
+    }
+    if (!t) return;
+
+    const dx = t.clientX - joyCenter.x;
+    const dy = t.clientY - joyCenter.y;
+    const mag = Math.hypot(dx, dy);
+    const capped = Math.min(mag, joyMax);
+    const ux = mag ? dx/mag : 0;
+    const uy = mag ? dy/mag : 0;
+
+    // Move visual stick
+    joyStick.style.left = (joyCenter.x + ux * capped) + 'px';
+    joyStick.style.top  = (joyCenter.y + uy * capped) + 'px';
+
+    // Map joystick deflection to your per-frame speed
+    const speedFactor = capped / joyMax; // 0..1
+    const currentSpeed = player.speed * (0.35 + 0.65*speedFactor); // a little ramp so micro-moves still feel responsive
+    player.vx = ux * currentSpeed;
+    player.vy = uy * currentSpeed;
+  }, {passive:false});
+
+  function endJoystick(e){
+    if (!joyActive) return;
+    let ended = false;
+    for (let i=0;i<e.changedTouches.length;i++){
+      if (e.changedTouches[i].identifier === joyId){ ended = true; break; }
+    }
+    if (ended){
+      joyActive = false; joyId = null;
+      player.vx = 0; player.vy = 0;
+      hideJoystick();
+    }
+  }
+  joystickArea.addEventListener('touchend', endJoystick, {passive:false});
+  joystickArea.addEventListener('touchcancel', endJoystick, {passive:false});
+
+  // Re-center joystick UI in landscape vs portrait (visual only; zones already fill edges)
+  function adjustJoyMax(){
+    // Use smaller of vw/vh to keep feel similar in landscape
+    const unit = Math.min(window.innerWidth, window.innerHeight);
+    joyMax = Math.max(60, Math.min(110, unit * 0.10)); // clamp for consistency
+  }
+  window.addEventListener('resize', adjustJoyMax);
+  adjustJoyMax();
+}
+
+/* ===== Game loop (unchanged logic) ===== */
+function checkCollisions(){
+  const dx = player.x - coin.x, dy = player.y - coin.y;
+  const distance = Math.sqrt(dx*dx + dy*dy);
+  if (distance < player.radius + coin.radius){
+    score++; spawnCoin();
+    if (hardMode){
+      if (score % 2 !== 0){
+        lasers.push({ y: player.y < canvas.height/2 ? canvas.height-5 : 0, vy: 1.5*(Math.random()>.5?1:-1), height:5, color:'red' });
+      } else {
+        lasers.push({ x: player.x < canvas.width/2 ? canvas.width-5 : 0, vx: 1.5*(Math.random()>.5?1:-1), width:5, color:'red' });
+      }
+    }
+  }
+  if (player.isJumping) return;
+
+  lasers.forEach(l=>{
+    if (gameOver) return;
+    if (l.hasOwnProperty('vy')){
+      if (player.y + player.radius > l.y && player.y - player.radius < l.y + l.height){ gameOver = true; }
+    } else if (l.hasOwnProperty('vx')){
+      if (player.x + player.radius > l.x && player.x - player.radius < l.x + l.width){ gameOver = true; }
+    }
+  });
+}
+
+function update(){
+  if (paused) return;
+  if (gameOver){
+    ctx.fillStyle='black'; ctx.font='50px Arial'; ctx.textAlign='center';
+    ctx.fillText('Game Over', canvas.width/2, canvas.height/2);
+    ctx.font='20px Arial'; ctx.fillText('Press Enter to restart', canvas.width/2, canvas.height/2 + 40);
+    restartButton.style.display='block';
+    return;
+  }
+  requestAnimationFrame(update);
+
+  // Desktop keys
+  if (keys.ArrowUp)    player.y -= player.speed;
+  if (keys.ArrowDown)  player.y += player.speed;
+  if (keys.ArrowLeft)  player.x -= player.speed;
+  if (keys.ArrowRight) player.x += player.speed;
+
+  // Mobile joystick velocities already baked in to player.vx/vy (per frame feel)
+  if (isMobile){ player.x += player.vx; player.y += player.vy; }
+
+  // Wrap-around (as before)
+  if (player.x < -player.radius) player.x = canvas.width + player.radius;
+  if (player.x > canvas.width + player.radius) player.x = -player.radius;
+  if (player.y < -player.radius) player.y = canvas.height + player.radius;
+  if (player.y > canvas.height + player.radius) player.y = -player.radius;
+
+  // Lasers move and bounce
+  lasers.forEach(l=>{
+    if (l.hasOwnProperty('vy')){
+      l.y += l.vy;
+      if (l.y + l.height > canvas.height || l.y < 0) l.vy *= -1;
+    } else {
+      l.x += l.vx;
+      if (l.x + l.width > canvas.width || l.x < 0) l.vx *= -1;
+    }
+  });
+
+  // Jump timer
+  if (player.isJumping && Date.now() - player.jumpStartTime > player.jumpDuration){
+    player.isJumping = false; player.color = 'blue';
+  }
+
+  checkCollisions();
+  draw();
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='white'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Player
+  ctx.fillStyle = player.color;
+  ctx.beginPath(); ctx.arc(player.x,player.y,player.radius,0,Math.PI*2); ctx.fill();
+
+  // Lasers
+  lasers.forEach(l=>{
+    ctx.fillStyle = l.color;
+    if (l.hasOwnProperty('vy')) ctx.fillRect(0, l.y, canvas.width, l.height);
+    else ctx.fillRect(l.x, 0, l.width, canvas.height);
+  });
+
+  // Coin
+  ctx.fillStyle = coin.color;
+  ctx.beginPath(); ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI*2); ctx.fill();
+
+  // HUD
+  ctx.fillStyle='black'; ctx.font='20px Arial'; ctx.textAlign='left';
+  ctx.fillText('Score: ' + score, 10, 25);
+}
+
+/* Boot */
+resetGame();
+runCountdown();
+</script>
 </body>
 </html>
