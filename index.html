@@ -73,6 +73,7 @@
       cursor: pointer;
       transition: transform .05s ease, background .15s ease;
       white-space: nowrap;
+      display: inline-block;
     }
     .btn:hover { background: var(--brand-blue-dark); }
     .btn:active { transform: translateY(1px); background: var(--brand-blue-dark); }
@@ -88,13 +89,16 @@
       z-index: 1;
     }
 
-    /* Make the grid a little smaller on computers (pointer:fine) */
+    /* Desktop: make grid a little smaller and lift content a bit */
     @media (hover:hover) and (pointer:fine){
       canvas{
         width: 78vmin;
         height: 78vmin;
         max-width: 480px;
         max-height: 480px;
+      }
+      #game-enclosure{
+        transform: translateY(-3vh); /* move title+buttons a little higher */
       }
     }
 
@@ -105,7 +109,7 @@
       /* Buttons: small & side-by-side directly under title, moved down a bit */
       .controls {
         position: fixed;
-        top: 56px; /* was 44px; moved down slightly */
+        top: 56px; /* slightly lower than before so it sits between title & grid */
         left: 0; right: 0;
         justify-content: center;
         gap: 6px;
@@ -115,14 +119,13 @@
       /* Jump: to the left under the grid & a bit bigger than before */
       #jumpArea {
         position: fixed;
-        /* left edge of grid is 50% - half canvas; nudge in by 6vw */
         left: calc(50% - var(--canvas-size-portrait) / 2 + 6vw);
         top: calc(50% + var(--canvas-size-portrait) / 2 + 3vh);
-        width: calc(var(--jump-w) * 1.33);  /* bigger */
-        height: calc(var(--jump-h) * 1.33); /* bigger */
+        width: calc(var(--jump-w) * 1.42);  /* bigger on mobile portrait */
+        height: calc(var(--jump-h) * 1.42);
         transform: none;
-        min-width: 100px;
-        min-height: 56px;
+        min-width: 108px;
+        min-height: 60px;
       }
     }
 
@@ -138,19 +141,19 @@
         text-align: left;
       }
 
-      /* Buttons top-right (stacked), narrower so they don't overlap grid */
+      /* Buttons top-right (stacked), natural width (not wide) */
       .controls {
         position: fixed;
-        top: 6px; right: 8px; left: auto;
-        width: 150px;             /* reduced from 180px */
+        top: 6px; right: 10px; left: auto;
+        width: auto;                 /* was fixed; now natural width */
         flex-direction: column;
         gap: 6px;
         justify-content: flex-start;
-        align-items: stretch;
+        align-items: flex-end;       /* tuck to right edge nicely */
       }
       .btn {
         font-size: 12px;
-        padding: 4px 6px;         /* tighter padding */
+        padding: 4px 8px;            /* compact, but not stretched */
       }
 
       /* Grid smaller and centered */
@@ -164,15 +167,15 @@
         z-index: 1;
       }
 
-      /* Jump bottom-left, slightly bigger than before */
+      /* Jump bottom-left, a touch bigger on mobile landscape */
       #jumpArea {
         position: fixed;
         left: 2vw; bottom: 3vh;
         transform: none;
-        width: calc(var(--jump-w) * 1.22);   /* slightly larger */
-        height: calc(var(--jump-h) * 1.22);  /* slightly larger */
-        min-width: 98px;
-        min-height: 54px;
+        width: calc(var(--jump-w) * 1.30);
+        height: calc(var(--jump-h) * 1.30);
+        min-width: 104px;
+        min-height: 58px;
       }
     }
 
@@ -191,7 +194,7 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Base jump button (exact size tweaked per media queries) */
+      /* Base jump button (exact size overridden in media blocks) */
       #jumpArea{
         z-index: 5; touch-action: none; box-sizing: border-box;
         width: calc(var(--jump-w) * 1.15);
