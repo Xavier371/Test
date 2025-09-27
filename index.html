@@ -6,20 +6,17 @@
   <title>Laser Jump</title>
   <style>
     :root{
-      /* Canvas sizes */
       --canvas-size-portrait: 96vmin;   /* full but safe in portrait */
       --canvas-size-landscape: 86vmin;  /* smaller in landscape, centered */
 
-      /* Jump button size */
-      --jump-w: 21vmin;   /* slightly larger */
+      --jump-w: 21vmin;
       --jump-h: 10.5vmin;
 
-      /* Theme */
+      /* Theme (xaviermathgames-like blue) */
       --brand-blue: #0033a0;
       --brand-blue-dark: #0b2a7a;
       --brand-blue-soft: rgba(0,51,160,0.08);
       --brand-border: rgba(0,0,0,0.18);
-      --ui-bg: rgba(240,240,240,0.92);
     }
 
     html, body {
@@ -49,9 +46,10 @@
       text-align: center;
       width: 100%;
       color: #111;
+      z-index: 6;
     }
 
-    /* ===== Controls (base) ===== */
+    /* ===== Controls ===== */
     .controls {
       display: flex;
       gap: 8px;
@@ -61,6 +59,7 @@
       width: 100%;
       max-width: 560px;
       padding: 0 8px;
+      z-index: 6;
     }
     .btn {
       border: 1px solid var(--brand-blue);
@@ -86,20 +85,21 @@
       max-width: 580px; max-height: 580px;
       border: 2px solid #000; background: #fff;
       touch-action: none;
+      z-index: 1;
     }
 
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
-      /* Centered title at the very top */
+      /* Title centered at the top */
       h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      /* Buttons: smaller, side-by-side under title */
+      /* Buttons: small & side-by-side directly under title */
       .controls {
         position: fixed;
         top: 44px; left: 0; right: 0;
         justify-content: center;
         gap: 6px;
       }
-      .btn { font-size: 13px; padding: 6px 9px; }
+      .btn { font-size: 12.5px; padding: 5px 8px; }
 
       /* Jump sits just under the grid (centered) */
       #jumpArea {
@@ -115,30 +115,22 @@
       body { align-items: stretch; }
       #game-enclosure { height: 100%; max-width: none; }
 
-      /* Title top-left */
+      /* Title top-left (no grey background) */
       h1 {
         position: fixed;
         top: 6px; left: 10px; right: auto;
         text-align: left;
-        z-index: 3;
-        background: var(--ui-bg);
-        padding: 6px 8px;
-        border-radius: 8px;
       }
 
-      /* Buttons top-right, vertical stack */
+      /* Buttons top-right (no grey background), smaller and vertical */
       .controls {
         position: fixed;
         top: 6px; right: 10px; left: auto;
-        width: 200px;
-        z-index: 3;
-        background: var(--ui-bg);
-        padding: 6px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        width: 180px;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
+      .btn { font-size: 12.5px; padding: 5px 8px; }
 
       /* Grid smaller and centered */
       canvas{
@@ -161,7 +153,7 @@
 
     /* ===== Modal ===== */
     #instructionsModal {
-      display:none; position:fixed; z-index:4; inset:0; background:rgba(0,0,0,0.4);
+      display:none; position:fixed; z-index:7; inset:0; background:rgba(0,0,0,0.4);
     }
     .modal-content {
       background:#fff; margin:12% auto; padding:20px; border:1px solid #888;
@@ -174,20 +166,21 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump button (dimensions; portrait/landscape placement above) */
+      /* Jump button (dimensions; placement set in media blocks) */
       #jumpArea{
-        z-index: 3; touch-action: none; box-sizing: border-box;
+        z-index: 5; touch-action: none; box-sizing: border-box;
         width: var(--jump-w); height: var(--jump-h);
         min-width: 78px; min-height: 44px;
         border: 2px solid var(--brand-border);
         border-radius: 12px; background: var(--brand-blue-soft);
       }
 
-      /* Right-side joystick input zone */
+      /* Right-side joystick input zone – keep under buttons/title for clicks */
       #joystickArea{
         position: fixed; right: 0; top: 0; bottom: 0;
         width: 48vw; max-width: 560px;
-        z-index: 3; touch-action: none; background: transparent;
+        z-index: 3; /* under header/buttons which are z-index:6 */
+        touch-action: none; background: transparent;
       }
 
       /* Home joystick (always visible bottom-right until drag) */
@@ -195,7 +188,7 @@
       #joyDynBase,  #joyDynStick{
         position: fixed; border-radius: 50%;
         transform: translate(-50%, -50%);
-        pointer-events: none; z-index: 5;
+        pointer-events: none; z-index: 4;
       }
       #joyHomeBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
@@ -357,22 +350,33 @@ let joyCenter = { x: 0, y: 0 };
 let joyMax = 100;                      // deflection radius
 let joyTargetVx = 0, joyTargetVy = 0;  // target velocity; eased toward
 
-/* Place the "home" joystick fixed in bottom-right corner */
+/* Place the "home" joystick fixed in bottom-right corner, accounting for its size */
 function placeHomeJoystick(){
+  // Temporarily reveal to measure size
+  joyHomeBase.style.visibility = 'hidden';
+  joyHomeStick.style.visibility = 'hidden';
+  joyHomeBase.style.display = 'block';
+  joyHomeStick.style.display = 'block';
+
+  const br = joyHomeBase.getBoundingClientRect();
+  const sr = joyHomeStick.getBoundingClientRect();
+  const halfW = br.width / 2;
+  const halfH = br.height / 2;
+
   const marginX = Math.max(14, window.innerWidth * 0.02);
   const marginY = Math.max(16, window.innerHeight * 0.03);
 
-  const baseX = window.innerWidth - marginX;
-  const baseY = window.innerHeight - marginY;
+  const baseX = window.innerWidth  - marginX - halfW;
+  const baseY = window.innerHeight - marginY - halfH;
 
   joyHomeBase.style.left  = baseX + 'px';
   joyHomeBase.style.top   = baseY + 'px';
   joyHomeStick.style.left = baseX + 'px';
   joyHomeStick.style.top  = baseY + 'px';
 
-  // Show home joystick visuals
-  joyHomeBase.style.display = 'block';
-  joyHomeStick.style.display = 'block';
+  // Show for real
+  joyHomeBase.style.visibility = 'visible';
+  joyHomeStick.style.visibility = 'visible';
 }
 
 /* Adjust joystick scale with viewport */
@@ -417,7 +421,7 @@ function hideHomeJoystick(){
   joyHomeStick.style.display = 'none';
 }
 
-/* Right-side area touch handling */
+/* Right-side area touch handling (buttons are above thanks to higher z-index) */
 if (isMobile){
   joystickArea.addEventListener('touchstart', e=>{
     if (gameOver || paused) return;
