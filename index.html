@@ -26,17 +26,17 @@
     button:hover { background: linear-gradient(145deg,#d4d4d4,#f0f0f0); box-shadow: 4px 4px 10px #b0b0b0,-4px -4px 10px #ffffff; }
     button:active { background:#e0e0e0; box-shadow: inset 2px 2px 5px #b0b0b0, inset -2px -2px 5px #ffffff; }
 
-    /* Square canvas that always fully fits (portrait & landscape) */
+    /* Square canvas always fully visible in portrait & landscape */
     canvas {
       display:block; margin:0 auto 8px auto;
-      width:92vmin; height:92vmin; /* use vmin so the whole square fits */
+      width:92vmin; height:92vmin;  /* vmin keeps full square on screen */
       max-width:500px; max-height:500px;
       border:2px solid black; background:#fff;
       touch-action:none;
     }
-    /* Slightly larger in landscape phones but still fully visible */
+    /* Slightly larger on landscape phones but still fully visible */
     @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
-      canvas { width: 96vmin !important; height: 96vmin !important; max-width:none; max-height:none; }
+      canvas { width:96vmin !important; height:96vmin !important; max-width:none; max-height:none; }
       .controls { transform: scale(0.95); }
     }
 
@@ -56,25 +56,23 @@
     @media (hover: none) and (pointer: coarse) {
       .touch-ui { display:block; }
 
-      /* Interaction zones */
       #jumpArea, #joystickArea {
         position: fixed; z-index: 4; touch-action: none; background: transparent;
         padding: env(safe-area-inset-top) env(safe-area-inset-right)
                  env(safe-area-inset-bottom) env(safe-area-inset-left);
       }
-      /* Left: visible jump rectangle */
+      /* Left: smaller jump rectangle */
       #jumpArea {
-        left: 0; top: 0; bottom: 0; width: 36vw; max-width: 420px;
+        left: 0; top: 0; bottom: 0; width: 24vw; max-width: 300px; min-width: 120px;
         border: 2px solid rgba(0,0,0,0.18);
-        border-radius: 12px;
-        box-sizing: border-box;
+        border-radius: 12px; box-sizing: border-box;
       }
       /* Right: joystick zone */
       #joystickArea {
-        right: 0; top: 0; bottom: 0; width: 40vw; max-width: 460px;
+        right: 0; top: 0; bottom: 0; width: 42vw; max-width: 480px;
       }
 
-      /* Joystick visuals — always visible in a fixed spot */
+      /* Joystick visuals — fixed position, always visible */
       #joyBase, #joyStick {
         position: fixed; border-radius: 50%;
         transform: translate(-50%, -50%); pointer-events: none;
@@ -97,13 +95,13 @@
 <body>
   <div id="game-enclosure">
     <h1>Laser Jump</h1>
+    <!-- Controls: Restart first; Pause removed -->
     <div class="controls">
-      <button id="pauseButton">Pause</button>
+      <button id="restartButton" style="display:none;">Restart</button>
       <button id="instructionsButton">Instructions</button>
       <button id="difficultyButton">Mode: Hard</button>
     </div>
     <canvas id="gameCanvas" width="500" height="500"></canvas>
-    <button id="restartButton" style="display:none;">Restart</button>
   </div>
 
   <!-- Mobile UI overlays -->
@@ -125,11 +123,10 @@
   </div>
 
 <script>
-/* ===== Core setup (same gameplay) ===== */
+/* ===== Core setup ===== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
-const pauseButton = document.getElementById('pauseButton');
 const instructionsButton = document.getElementById('instructionsButton');
 const difficultyButton = document.getElementById('difficultyButton');
 const instructionsModal = document.getElementById('instructionsModal');
@@ -144,7 +141,7 @@ canvas.width = canvas.height = gameResolution;
 let player = {
   x: gameResolution/2, y: gameResolution/2,
   radius: gridSize/2,
-  speed: isMobile ? 6 : 3, // per-frame feel like your original
+  speed: isMobile ? 6 : 3,  // keep original per-frame feel
   vx: 0, vy: 0,
   color: 'blue',
   isJumping: false,
@@ -166,7 +163,6 @@ function resetGame(){
   score = 0; gameOver = false; paused = false;
   spawnCoin();
   restartButton.style.display = 'none';
-  pauseButton.textContent = 'Pause';
 }
 restartButton.addEventListener('click', ()=>{ resetGame(); startGame(); });
 difficultyButton.addEventListener('click', ()=>{
@@ -174,12 +170,6 @@ difficultyButton.addEventListener('click', ()=>{
   difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
 });
 
-window.addEventListener('click', (e)=>{
-  if (e.target === instructionsModal){
-    instructionsModal.style.display = 'none';
-    if (paused) togglePause();
-  }
-});
 function startGame(){ update(); }
 function runCountdown(){
   let count = 3;
@@ -193,14 +183,11 @@ function runCountdown(){
     } else { ctx.textBaseline='alphabetic'; startGame(); }
   })();
 }
-function togglePause(){
-  paused = !paused;
-  pauseButton.textContent = paused ? 'Resume' : 'Pause';
-  if (!paused) update();
-}
-pauseButton.addEventListener('click', togglePause);
-instructionsButton.addEventListener('click', ()=>{ paused=true; pauseButton.textContent='Resume'; instructionsModal.style.display='block'; });
-closeButton.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused) togglePause(); });
+
+/* Modal acts like pause (no pause button needed) */
+instructionsButton.addEventListener('click', ()=>{ paused=true; instructionsModal.style.display='block'; });
+closeButton.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } });
+window.addEventListener('click', (e)=>{ if (e.target===instructionsModal){ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } } });
 
 function spawnCoin(){
   const pad = coin.radius*2;
@@ -208,7 +195,7 @@ function spawnCoin(){
   coin.y = pad + Math.random()*(canvas.height - 2*pad);
 }
 
-/* ===== Desktop keyboard (unchanged) ===== */
+/* ===== Desktop keyboard ===== */
 document.addEventListener('keydown', e=>{
   if (gameOver){
     if (e.key==='Enter'){ resetGame(); startGame(); }
@@ -220,11 +207,10 @@ document.addEventListener('keydown', e=>{
       player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
     }
   }
-  if (e.key==='p'||e.key==='P') togglePause();
 });
 document.addEventListener('keyup', e=>{ if (keys.hasOwnProperty(e.key)) keys[e.key]=false; });
 
-/* ===== Mobile on-screen controls with smoothing ===== */
+/* ===== Mobile on-screen controls (smaller jump + smoother joystick) ===== */
 const jumpArea = document.getElementById('jumpArea');
 const joystickArea = document.getElementById('joystickArea');
 const joyBase = document.getElementById('joyBase');
@@ -233,8 +219,8 @@ const joyStick = document.getElementById('joyStick');
 let joyActive = false;
 let joyId = null;
 let joyCenter = { x: 0, y: 0 };
-let joyMax = 90; // a bit larger throw for smoother control
-let joyTargetVx = 0, joyTargetVy = 0; // target velocity; we ease player.vx/vy toward this
+let joyMax = 100;                 // bigger throw for finer control
+let joyTargetVx = 0, joyTargetVy = 0;
 
 function placeJoystickDefault(){
   // Bottom-center of the right zone
@@ -248,24 +234,21 @@ function placeJoystickDefault(){
 }
 function adjustJoyMax(){
   const unit = Math.min(window.innerWidth, window.innerHeight);
-  joyMax = Math.max(70, Math.min(120, unit * 0.11));
+  joyMax = Math.max(80, Math.min(130, unit * 0.12));
 }
-function onResize(){
-  adjustJoyMax();
-  placeJoystickDefault();
-}
+function onResize(){ adjustJoyMax(); placeJoystickDefault(); }
 window.addEventListener('resize', onResize);
 if (isMobile) onResize();
 
 if (isMobile){
-  // Prevent scrolling/gestures inside control areas
+  // Prevent page gestures inside control areas
   [jumpArea, joystickArea].forEach(el=>{
     ['touchstart','touchmove','touchend','touchcancel'].forEach(evt=>{
       el.addEventListener(evt, e=>e.preventDefault(), {passive:false});
     });
   });
 
-  // Jump
+  // Jump (left, smaller)
   jumpArea.addEventListener('touchstart', ()=>{
     if (gameOver || paused) return;
     if (!player.isJumping){
@@ -274,15 +257,13 @@ if (isMobile){
     }
   }, {passive:false});
 
-  // Joystick start
+  // Joystick
   joystickArea.addEventListener('touchstart', e=>{
     if (gameOver || paused) return;
     const t = e.changedTouches[0];
     joyId = t.identifier; joyActive = true;
     updateStick(t.clientX, t.clientY);
   }, {passive:false});
-
-  // Joystick move
   joystickArea.addEventListener('touchmove', e=>{
     if (!joyActive) return;
     let t = null;
@@ -292,8 +273,6 @@ if (isMobile){
     if (!t) return;
     updateStick(t.clientX, t.clientY);
   }, {passive:false});
-
-  // Joystick end
   function endJoystick(e){
     if (!joyActive) return;
     let ended = false;
@@ -302,7 +281,7 @@ if (isMobile){
     }
     if (ended){
       joyActive = false; joyId = null;
-      joyTargetVx = 0; joyTargetVy = 0; // ease back to zero
+      joyTargetVx = 0; joyTargetVy = 0;
       joyStick.style.left = joyCenter.x + 'px';
       joyStick.style.top  = joyCenter.y + 'px';
     }
@@ -319,18 +298,17 @@ function updateStick(cx, cy){
   const ux = mag ? dx/mag : 0;
   const uy = mag ? dy/mag : 0;
 
-  // Move visual stick
   joyStick.style.left = (joyCenter.x + ux * capped) + 'px';
   joyStick.style.top  = (joyCenter.y + uy * capped) + 'px';
 
-  // Target velocity (we'll ease toward this for smoothness)
-  const speedFactor = capped / joyMax; // 0..1
-  const currentSpeed = player.speed * (0.35 + 0.65 * speedFactor);
+  // Target velocity (smoothly applied in update)
+  const speedFactor = capped / joyMax;
+  const currentSpeed = player.speed * (0.30 + 0.70 * speedFactor); // slightly smoother ramp
   joyTargetVx = ux * currentSpeed;
   joyTargetVy = uy * currentSpeed;
 }
 
-/* ===== Game loop (unchanged logic + velocity smoothing) ===== */
+/* ===== Game loop (with velocity smoothing) ===== */
 function checkCollisions(){
   const dx = player.x - coin.x, dy = player.y - coin.y;
   const distance = Math.sqrt(dx*dx + dy*dy);
@@ -366,7 +344,7 @@ function update(){
     ctx.fillStyle='black'; ctx.font='50px Arial'; ctx.textAlign='center';
     ctx.fillText('Game Over', canvas.width/2, canvas.height/2);
     ctx.font='20px Arial'; ctx.fillText('Press Enter to restart', canvas.width/2, canvas.height/2 + 40);
-    restartButton.style.display='block';
+    restartButton.style.display='inline-block';
     return;
   }
   requestAnimationFrame(update);
@@ -377,12 +355,11 @@ function update(){
   if (keys.ArrowLeft)  player.x -= player.speed;
   if (keys.ArrowRight) player.x += player.speed;
 
-  // Mobile joystick: ease vx/vy toward target for smoothness
+  // Mobile joystick: ease actual velocity toward target
   if (isMobile){
-    const ease = 0.18; // smoothing factor (higher = snappier, lower = smoother)
+    const ease = 0.20; // 0.12 smoother, 0.25 snappier
     player.vx = player.vx * (1 - ease) + joyTargetVx * ease;
     player.vy = player.vy * (1 - ease) + joyTargetVy * ease;
-
     player.x += player.vx;
     player.y += player.vy;
   }
