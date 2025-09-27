@@ -53,7 +53,7 @@
     .controls {
       display: flex;
       gap: 8px;
-      justify-content: center;
+      justify-content: center;   /* centered */
       align-items: center;
       flex-wrap: wrap;
       width: 100%;
@@ -90,9 +90,9 @@
 
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
-      /* Title centered at the top */
+      /* Title centered at the very top */
       h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      /* Buttons: small & side-by-side directly under title */
+      /* Buttons: small & side-by-side directly under title (centered) */
       .controls {
         position: fixed;
         top: 44px; left: 0; right: 0;
@@ -106,7 +106,7 @@
         position: fixed;
         left: 50%;
         transform: translateX(-50%);
-        top: calc(50% + var(--canvas-size-portrait) / 2 + 2.6vh);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 3.2vh);
       }
     }
 
@@ -129,6 +129,8 @@
         width: 180px;
         flex-direction: column;
         gap: 6px;
+        justify-content: flex-start;
+        align-items: stretch;
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
@@ -166,11 +168,12 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump button (dimensions; placement set in media blocks) */
+      /* Jump button: make a little bigger overall */
       #jumpArea{
         z-index: 5; touch-action: none; box-sizing: border-box;
-        width: var(--jump-w); height: var(--jump-h);
-        min-width: 78px; min-height: 44px;
+        width: calc(var(--jump-w) * 1.15);
+        height: calc(var(--jump-h) * 1.15);
+        min-width: 90px; min-height: 50px;
         border: 2px solid var(--brand-border);
         border-radius: 12px; background: var(--brand-blue-soft);
       }
@@ -352,14 +355,13 @@ let joyTargetVx = 0, joyTargetVy = 0;  // target velocity; eased toward
 
 /* Place the "home" joystick fixed in bottom-right corner, accounting for its size */
 function placeHomeJoystick(){
-  // Temporarily reveal to measure size
+  // Temporarily reveal to measure size so it sits fully on-screen
   joyHomeBase.style.visibility = 'hidden';
   joyHomeStick.style.visibility = 'hidden';
   joyHomeBase.style.display = 'block';
   joyHomeStick.style.display = 'block';
 
   const br = joyHomeBase.getBoundingClientRect();
-  const sr = joyHomeStick.getBoundingClientRect();
   const halfW = br.width / 2;
   const halfH = br.height / 2;
 
