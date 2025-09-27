@@ -98,7 +98,7 @@
         max-height: 480px;
       }
       #game-enclosure{
-        transform: translateY(-3vh); /* move title+buttons a little higher */
+        transform: translateY(-3.2vh); /* move title+buttons a little higher */
       }
     }
 
@@ -109,23 +109,24 @@
       /* Buttons: small & side-by-side directly under title, moved down a bit */
       .controls {
         position: fixed;
-        top: 56px; /* slightly lower than before so it sits between title & grid */
+        top: 56px; /* sits between title & grid */
         left: 0; right: 0;
         justify-content: center;
         gap: 6px;
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
-      /* Jump: to the left under the grid & a bit bigger than before */
+      /* Jump: to the left under the grid & bigger, but stay off the grid and on screen */
       #jumpArea {
         position: fixed;
         left: calc(50% - var(--canvas-size-portrait) / 2 + 6vw);
-        top: calc(50% + var(--canvas-size-portrait) / 2 + 3vh);
-        width: calc(var(--jump-w) * 1.42);  /* bigger on mobile portrait */
-        height: calc(var(--jump-h) * 1.42);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 3.2vh);
+        width: min(calc(var(--jump-w) * 1.50), 42vw);  /* bigger but capped */
+        height: calc(var(--jump-h) * 1.50);
+        max-height: 14vh;
         transform: none;
-        min-width: 108px;
-        min-height: 60px;
+        min-width: 112px;
+        min-height: 62px;
       }
     }
 
@@ -141,19 +142,19 @@
         text-align: left;
       }
 
-      /* Buttons top-right (stacked), natural width (not wide) */
+      /* Buttons top-right (stacked), natural width, centered in their column */
       .controls {
         position: fixed;
         top: 6px; right: 10px; left: auto;
-        width: auto;                 /* was fixed; now natural width */
+        width: auto;                 /* natural width */
         flex-direction: column;
         gap: 6px;
-        justify-content: flex-start;
-        align-items: flex-end;       /* tuck to right edge nicely */
+        justify-content: center;     /* center within column vertically */
+        align-items: center;         /* center buttons horizontally in column */
       }
       .btn {
         font-size: 12px;
-        padding: 4px 8px;            /* compact, but not stretched */
+        padding: 4px 8px;            /* compact */
       }
 
       /* Grid smaller and centered */
@@ -167,13 +168,14 @@
         z-index: 1;
       }
 
-      /* Jump bottom-left, a touch bigger on mobile landscape */
+      /* Jump bottom-left, a touch bigger (but not huge) */
       #jumpArea {
         position: fixed;
         left: 2vw; bottom: 3vh;
         transform: none;
-        width: calc(var(--jump-w) * 1.30);
+        width: min(calc(var(--jump-w) * 1.30), 28vw);
         height: calc(var(--jump-h) * 1.30);
+        max-height: 16vh;
         min-width: 104px;
         min-height: 58px;
       }
@@ -194,17 +196,17 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Base jump button (exact size overridden in media blocks) */
+      /* Base jump button (size overridden in media blocks) */
       #jumpArea{
         z-index: 5; touch-action: none; box-sizing: border-box;
-        width: calc(var(--jump-w) * 1.15);
-        height: calc(var(--jump-h) * 1.15);
+        width: calc(var(--jump-w) * 1.2);
+        height: calc(var(--jump-h) * 1.2);
         min-width: 90px; min-height: 50px;
         border: 2px solid var(--brand-border);
         border-radius: 12px; background: var(--brand-blue-soft);
       }
 
-      /* Right-side joystick input zone – keep under buttons/title for clicks */
+      /* Right-side joystick input zone – under header/buttons */
       #joystickArea{
         position: fixed; right: 0; top: 0; bottom: 0;
         width: 48vw; max-width: 560px;
@@ -212,9 +214,8 @@
         touch-action: none; background: transparent;
       }
 
-      /* Home joystick (always visible bottom-right until drag) */
-      #joyHomeBase, #joyHomeStick,
-      #joyDynBase,  #joyDynStick{
+      /* Joystick visuals (home + dynamic) */
+      #joyHomeBase, #joyHomeStick, #joyDynBase, #joyDynStick{
         position: fixed; border-radius: 50%;
         transform: translate(-50%, -50%);
         pointer-events: none; z-index: 4;
@@ -222,14 +223,13 @@
       #joyHomeBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
         border: 2px solid var(--brand-border); background: rgba(0,0,0,0.04);
-        display: none; /* shown via JS on mobile */
+        display: none;
       }
       #joyHomeStick{
         width: 11vmin; height: 11vmin; max-width: 95px; max-height: 95px;
         border: 2px solid rgba(0,0,0,0.22); background: rgba(0,0,0,0.10);
         display: none;
       }
-      /* Dynamic joystick: appears where user touches; hidden on release */
       #joyDynBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
         border: 2px solid var(--brand-border); background: rgba(0,0,0,0.04);
@@ -298,7 +298,7 @@ canvas.width = canvas.height = gameResolution;
 let player = {
   x: gameResolution/2, y: gameResolution/2,
   radius: gridSize/2,
-  speed: isMobile ? 6 : 3,
+  speed: isMobile ? 6.8 : 2.6,   // ↑ a tiny bit faster on phones, ↓ a little slower on computers
   vx: 0, vy: 0,
   color: 'blue',
   isJumping: false,
