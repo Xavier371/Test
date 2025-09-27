@@ -310,13 +310,16 @@ let coin = { x: 0, y: 0, radius: gridSize/2, color: 'gold' };
 let score = 0, gameOver = false, paused = false, hardMode = true;
 const keys = { ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false };
 
+/* Laser speed tuning: slower on desktop, faster on mobile */
+const LASER_SPEED = isMobile ? 2.6 : 1.8;
+
 /* Reset & start */
 function resetGame(){
   player.x = gameResolution/2; player.y = gameResolution/2;
   player.vx = player.vy = 0; player.isJumping = false; player.color = 'blue';
   lasers = [
-    { y: 50, vy: 2.2, height: 5, color: 'red' },   // faster lasers
-    { x: 50, vx: 2.2, width: 5,  color: 'red' }    // faster lasers
+    { y: 50, vy: LASER_SPEED, height: 5, color: 'red' },
+    { x: 50, vx: LASER_SPEED, width: 5,  color: 'red' }
   ];
   score = 0; gameOver = false; paused = false;
   spawnCoin();
@@ -436,25 +439,23 @@ if (isMobile){
   }, {passive:false});
 }
 
-/* NEW: Tap-near-jump proximity on mobile */
+/* Tap-near-jump proximity on mobile (kept as-is) */
 if (isMobile){
   document.addEventListener('touchstart', (e)=>{
-    // If joystick started this touch, let joystick handler manage it
-    // We'll only check "near jump" on single-finger taps not starting inside joystickArea
     const t = e.changedTouches[0];
     if (!t) return;
 
-    // If touch started in joystick area, ignore for jump-near detection
+    // Ignore touches starting in the joystick area
     const jRect = joystickArea.getBoundingClientRect();
     if (t.clientX >= jRect.left && t.clientX <= jRect.right &&
         t.clientY >= jRect.top  && t.clientY <= jRect.bottom){
-      return; // joystick touch
+      return;
     }
 
-    // Check proximity to jump button rect with generous margin
+    // Proximity to jump button
     const r = jumpArea.getBoundingClientRect();
     const unit = Math.min(window.innerWidth, window.innerHeight);
-    const margin = Math.max(30, Math.min(80, unit * 0.06)); // ~6% of short side, capped
+    const margin = Math.max(30, Math.min(80, unit * 0.06)); // generous radius
     const near =
       t.clientX >= (r.left - margin)  && t.clientX <= (r.right + margin) &&
       t.clientY >= (r.top  - margin)  && t.clientY <= (r.bottom + margin);
@@ -553,10 +554,10 @@ function checkCollisions(){
     if (hardMode){
       if (score % 2){
         lasers.push({ y: player.y < canvas.height/2 ? canvas.height - 5 : 0,
-                      vy: 2.2 * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' }); // faster
+                      vy: LASER_SPEED * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' });
       } else {
         lasers.push({ x: player.x < canvas.width/2 ? canvas.width - 5 : 0,
-                      vx: 2.2 * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });  // faster
+                      vx: LASER_SPEED * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });
       }
     }
   }
