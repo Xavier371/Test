@@ -11,12 +11,12 @@
       --canvas-size-landscape: 86vmin;  /* smaller in landscape, centered */
 
       /* Jump button size */
-      --jump-w: 21vmin;   /* slightly larger, as requested earlier */
+      --jump-w: 21vmin;   /* slightly larger */
       --jump-h: 10.5vmin;
 
-      /* Brand-ish theme (clean white + bold blue accents) */
-      --brand-blue: #0033a0;       /* primary accent */
-      --brand-blue-dark: #0b2a7a;  /* hover/active */
+      /* Theme */
+      --brand-blue: #0033a0;
+      --brand-blue-dark: #0b2a7a;
       --brand-blue-soft: rgba(0,51,160,0.08);
       --brand-border: rgba(0,0,0,0.18);
       --ui-bg: rgba(240,240,240,0.92);
@@ -51,28 +51,29 @@
       color: #111;
     }
 
-    /* ===== Controls (vertical stack) ===== */
+    /* ===== Controls (base) ===== */
     .controls {
       display: flex;
-      flex-direction: column;
       gap: 8px;
       justify-content: center;
-      align-items: stretch;
-      width: min(280px, 90vw);
+      align-items: center;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 560px;
+      padding: 0 8px;
     }
     .btn {
-      display: block;
-      width: 100%;
       border: 1px solid var(--brand-blue);
       border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 16px;
+      padding: 6px 10px;
+      font-size: 14px;
       font-weight: 600;
       color: #fff;
       background: var(--brand-blue);
       box-shadow: 0 1px 2px rgba(0,0,0,0.08);
       cursor: pointer;
       transition: transform .05s ease, background .15s ease;
+      white-space: nowrap;
     }
     .btn:hover { background: var(--brand-blue-dark); }
     .btn:active { transform: translateY(1px); background: var(--brand-blue-dark); }
@@ -89,14 +90,23 @@
 
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
+      /* Centered title at the very top */
       h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      .controls { margin-top: 48px; } /* push below title */
-      /* Jump sits just under the grid */
+      /* Buttons: smaller, side-by-side under title */
+      .controls {
+        position: fixed;
+        top: 44px; left: 0; right: 0;
+        justify-content: center;
+        gap: 6px;
+      }
+      .btn { font-size: 13px; padding: 6px 9px; }
+
+      /* Jump sits just under the grid (centered) */
       #jumpArea {
         position: fixed;
         left: 50%;
         transform: translateX(-50%);
-        top: calc(50% + var(--canvas-size-portrait) / 2 + 2.8vh);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 2.6vh);
       }
     }
 
@@ -126,6 +136,8 @@
         padding: 6px;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        flex-direction: column;
+        gap: 8px;
       }
 
       /* Grid smaller and centered */
@@ -162,7 +174,7 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump button dimensions (reused for portrait/landscape placement above) */
+      /* Jump button (dimensions; portrait/landscape placement above) */
       #jumpArea{
         z-index: 3; touch-action: none; box-sizing: border-box;
         width: var(--jump-w); height: var(--jump-h);
@@ -178,7 +190,7 @@
         z-index: 3; touch-action: none; background: transparent;
       }
 
-      /* Home joystick (always visible at bottom-right until drag begins) */
+      /* Home joystick (always visible bottom-right until drag) */
       #joyHomeBase, #joyHomeStick,
       #joyDynBase,  #joyDynStick{
         position: fixed; border-radius: 50%;
@@ -213,7 +225,7 @@
   <div id="game-enclosure">
     <h1>Laser Jump</h1>
 
-    <!-- Buttons vertically stacked (Restart always visible) -->
+    <!-- Buttons (portrait: side-by-side; landscape: vertical top-right) -->
     <div class="controls" id="controls">
       <button class="btn" id="restartButton">Restart</button>
       <button class="btn" id="instructionsButton">Instructions</button>
@@ -350,7 +362,6 @@ function placeHomeJoystick(){
   const marginX = Math.max(14, window.innerWidth * 0.02);
   const marginY = Math.max(16, window.innerHeight * 0.03);
 
-  // Base: bottom-right corner position
   const baseX = window.innerWidth - marginX;
   const baseY = window.innerHeight - marginY;
 
