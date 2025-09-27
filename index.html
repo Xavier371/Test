@@ -6,11 +6,22 @@
   <title>Laser Jump</title>
   <style>
     :root{
-      --canvas-size-portrait: 96vmin;   /* full but safe */
-      --canvas-size-landscape: 86vmin;  /* smaller in landscape per your request */
-      --jump-w: 21vmin;  /* a teeny bit bigger */
+      /* Canvas sizes */
+      --canvas-size-portrait: 96vmin;   /* full but safe in portrait */
+      --canvas-size-landscape: 86vmin;  /* smaller in landscape, centered */
+
+      /* Jump button size */
+      --jump-w: 21vmin;   /* slightly larger, as requested earlier */
       --jump-h: 10.5vmin;
+
+      /* Brand-ish theme (clean white + bold blue accents) */
+      --brand-blue: #0033a0;       /* primary accent */
+      --brand-blue-dark: #0b2a7a;  /* hover/active */
+      --brand-blue-soft: rgba(0,51,160,0.08);
+      --brand-border: rgba(0,0,0,0.18);
+      --ui-bg: rgba(240,240,240,0.92);
     }
+
     html, body {
       width: 100%; height: 100%;
       margin: 0; padding: 0;
@@ -19,10 +30,10 @@
     }
     body {
       display: flex; justify-content: center; align-items: center;
-      font-family: sans-serif;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
     }
 
-    /* ===== Layout Wrapper ===== */
+    /* ===== Layout wrapper ===== */
     #game-enclosure {
       width: 100%;
       max-width: 820px;
@@ -37,48 +48,38 @@
       font-size: 24px; line-height: 1.2;
       text-align: center;
       width: 100%;
+      color: #111;
     }
 
-    /* Portrait title pinned top/center */
-    @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
-      h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      .controls { margin-top: 46px; }
-    }
-
-    /* Landscape: title top-left (fixed), controls top-right (fixed) */
-    @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
-      body { align-items: stretch; }
-      #game-enclosure { height: 100%; max-width: none; }
-
-      h1 {
-        position: fixed;
-        top: 6px; left: 10px; right: auto;
-        text-align: left;
-        z-index: 3;
-      }
-      .controls {
-        position: fixed;
-        top: 6px; right: 10px; left: auto;
-        justify-content: flex-end;
-        z-index: 3;
-      }
-    }
-
-    /* ===== Controls ===== */
+    /* ===== Controls (vertical stack) ===== */
     .controls {
-      display: flex; gap: 8px; justify-content: center; align-items: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
+      align-items: stretch;
+      width: min(280px, 90vw);
     }
-    button {
-      background: linear-gradient(145deg,#e6e6e6,#ffffff);
-      border: 1px solid #dcdcdc; border-radius: 8px;
-      box-shadow: 2px 2px 5px #cccccc,-2px -2px 5px #ffffff;
-      padding: 6px 12px; font-size: 15px; cursor: pointer;
+    .btn {
+      display: block;
+      width: 100%;
+      border: 1px solid var(--brand-blue);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--brand-blue);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform .05s ease, background .15s ease;
     }
-    button:active { background:#e0e0e0; }
+    .btn:hover { background: var(--brand-blue-dark); }
+    .btn:active { transform: translateY(1px); background: var(--brand-blue-dark); }
 
     /* ===== Canvas ===== */
     canvas {
-      display: block; margin: 0 auto 0 auto;
+      display: block; margin: 0 auto;
       width: var(--canvas-size-portrait);
       height: var(--canvas-size-portrait);
       max-width: 580px; max-height: 580px;
@@ -86,8 +87,48 @@
       touch-action: none;
     }
 
-    /* Landscape: center the grid and shrink a bit */
+    /* ===== Portrait (mobile vertical) ===== */
+    @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
+      h1 { position: fixed; top: 6px; left: 0; right: 0; }
+      .controls { margin-top: 48px; } /* push below title */
+      /* Jump sits just under the grid */
+      #jumpArea {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 2.8vh);
+      }
+    }
+
+    /* ===== Landscape (mobile horizontal) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
+      body { align-items: stretch; }
+      #game-enclosure { height: 100%; max-width: none; }
+
+      /* Title top-left */
+      h1 {
+        position: fixed;
+        top: 6px; left: 10px; right: auto;
+        text-align: left;
+        z-index: 3;
+        background: var(--ui-bg);
+        padding: 6px 8px;
+        border-radius: 8px;
+      }
+
+      /* Buttons top-right, vertical stack */
+      .controls {
+        position: fixed;
+        top: 6px; right: 10px; left: auto;
+        width: 200px;
+        z-index: 3;
+        background: var(--ui-bg);
+        padding: 6px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      }
+
+      /* Grid smaller and centered */
       canvas{
         position: absolute;
         top: 50%; left: 50%;
@@ -96,6 +137,13 @@
         height: var(--canvas-size-landscape);
         max-width: none; max-height: none;
         z-index: 1;
+      }
+
+      /* Jump bottom-left */
+      #jumpArea {
+        position: fixed;
+        left: 2vw; bottom: 3vh;
+        transform: none;
       }
     }
 
@@ -114,36 +162,23 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Portrait: jump bottom-left. Landscape: under the grid, slightly left of center. */
+      /* Jump button dimensions (reused for portrait/landscape placement above) */
       #jumpArea{
-        position: fixed;
         z-index: 3; touch-action: none; box-sizing: border-box;
-        border: 2px solid rgba(0,0,0,0.18);
-        border-radius: 12px; background: rgba(0,0,0,0.03);
         width: var(--jump-w); height: var(--jump-h);
         min-width: 78px; min-height: 44px;
-      }
-      /* Portrait placement */
-      @media (orientation:portrait){
-        #jumpArea{ left: 3vw; bottom: 7vh; }
-      }
-      /* Landscape placement: right under the centered canvas, offset a bit to the left */
-      @media (orientation:landscape){
-        #jumpArea{
-          top: calc(50% + var(--canvas-size-landscape) / 2 + 2.8vh);
-          left: 50%;
-          transform: translate(-60%, 0);  /* slightly left of center */
-        }
+        border: 2px solid var(--brand-border);
+        border-radius: 12px; background: var(--brand-blue-soft);
       }
 
-      /* Joystick input zones */
+      /* Right-side joystick input zone */
       #joystickArea{
         position: fixed; right: 0; top: 0; bottom: 0;
-        width: 45vw; max-width: 520px;
+        width: 48vw; max-width: 560px;
         z-index: 3; touch-action: none; background: transparent;
       }
 
-      /* Home joystick (always visible until drag begins) */
+      /* Home joystick (always visible at bottom-right until drag begins) */
       #joyHomeBase, #joyHomeStick,
       #joyDynBase,  #joyDynStick{
         position: fixed; border-radius: 50%;
@@ -152,8 +187,8 @@
       }
       #joyHomeBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
-        border: 2px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04);
-        display: none; /* shown only on mobile via JS after placement */
+        border: 2px solid var(--brand-border); background: rgba(0,0,0,0.04);
+        display: none; /* shown via JS on mobile */
       }
       #joyHomeStick{
         width: 11vmin; height: 11vmin; max-width: 95px; max-height: 95px;
@@ -163,7 +198,7 @@
       /* Dynamic joystick: appears where user touches; hidden on release */
       #joyDynBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
-        border: 2px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04);
+        border: 2px solid var(--brand-border); background: rgba(0,0,0,0.04);
         display: none;
       }
       #joyDynStick{
@@ -176,13 +211,13 @@
 </head>
 <body>
   <div id="game-enclosure">
-    <h1 id="title">Laser Jump</h1>
+    <h1>Laser Jump</h1>
 
-    <!-- Controls: Restart always visible -->
+    <!-- Buttons vertically stacked (Restart always visible) -->
     <div class="controls" id="controls">
-      <button id="restartButton">Restart</button>
-      <button id="instructionsButton">Instructions</button>
-      <button id="difficultyButton">Mode: Hard</button>
+      <button class="btn" id="restartButton">Restart</button>
+      <button class="btn" id="instructionsButton">Instructions</button>
+      <button class="btn" id="difficultyButton">Mode: Hard</button>
     </div>
 
     <canvas id="gameCanvas" width="500" height="500"></canvas>
@@ -191,7 +226,7 @@
   <!-- Mobile overlays -->
   <div class="touch-ui" id="jumpArea" aria-label="Jump"></div>
   <div class="touch-ui" id="joystickArea" aria-label="Joystick area"></div>
-  <!-- Home joystick (default spot on the side) -->
+  <!-- Home joystick (fixed bottom-right corner) -->
   <div class="touch-ui" id="joyHomeBase"></div>
   <div class="touch-ui" id="joyHomeStick"></div>
   <!-- Dynamic joystick (appears at touch) -->
@@ -205,14 +240,14 @@
       <h2>How to Play</h2>
       <ul>
         <li>Desktop: arrow keys to move, Space to jump.</li>
-        <li>Mobile: right-side joystick to move (appears where you touch), left rectangle to jump.</li>
+        <li>Mobile: right-side joystick to move (drag anywhere on the right), left jump button.</li>
         <li>Collect coins to score; in Hard mode, each coin adds a laser.</li>
       </ul>
     </div>
   </div>
 
 <script>
-/* ===== Core Game Setup (unchanged mechanics) ===== */
+/* ===== Core Game Setup ===== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
@@ -229,7 +264,7 @@ canvas.width = canvas.height = gameResolution;
 let player = {
   x: gameResolution/2, y: gameResolution/2,
   radius: gridSize/2,
-  speed: isMobile ? 6 : 3,  // per-frame feel
+  speed: isMobile ? 6 : 3,
   vx: 0, vy: 0,
   color: 'blue',
   isJumping: false,
@@ -296,33 +331,39 @@ document.addEventListener('keyup', e=>{ if (keys.hasOwnProperty(e.key)) keys[e.k
 const jumpArea = document.getElementById('jumpArea');
 const joystickArea = document.getElementById('joystickArea');
 
-/* Home joystick (always shown until drag) */
+/* Home joystick (always visible at bottom-right until drag) */
 const joyHomeBase  = document.getElementById('joyHomeBase');
 const joyHomeStick = document.getElementById('joyHomeStick');
 
-/* Dynamic joystick (appears at touch point) */
+/* Dynamic joystick (appears at drag point) */
 const joyDynBase  = document.getElementById('joyDynBase');
 const joyDynStick = document.getElementById('joyDynStick');
 
 let joyActive = false;
 let joyId = null;
 let joyCenter = { x: 0, y: 0 };
-let joyMax = 100;                 // deflection radius
-let joyTargetVx = 0, joyTargetVy = 0; // target velocity; eased toward
+let joyMax = 100;                      // deflection radius
+let joyTargetVx = 0, joyTargetVy = 0;  // target velocity; eased toward
 
-/* Place the "home" joystick centered on the right side */
+/* Place the "home" joystick fixed in bottom-right corner */
 function placeHomeJoystick(){
-  const r = joystickArea.getBoundingClientRect();
-  const cx = r.left + r.width * 0.50;
-  const cy = r.top  + r.height * 0.50;
-  joyHomeBase.style.left  = cx + 'px';
-  joyHomeBase.style.top   = cy + 'px';
-  joyHomeStick.style.left = cx + 'px';
-  joyHomeStick.style.top  = cy + 'px';
-  // show home joystick visuals
+  const marginX = Math.max(14, window.innerWidth * 0.02);
+  const marginY = Math.max(16, window.innerHeight * 0.03);
+
+  // Base: bottom-right corner position
+  const baseX = window.innerWidth - marginX;
+  const baseY = window.innerHeight - marginY;
+
+  joyHomeBase.style.left  = baseX + 'px';
+  joyHomeBase.style.top   = baseY + 'px';
+  joyHomeStick.style.left = baseX + 'px';
+  joyHomeStick.style.top  = baseY + 'px';
+
+  // Show home joystick visuals
   joyHomeBase.style.display = 'block';
   joyHomeStick.style.display = 'block';
 }
+
 /* Adjust joystick scale with viewport */
 function adjustJoyMax(){
   const unit = Math.min(window.innerWidth, window.innerHeight);
@@ -399,7 +440,7 @@ if (isMobile){
       joyActive = false; joyId = null;
       joyTargetVx = 0; joyTargetVy = 0;
       hideDynamicJoystick();
-      placeHomeJoystick(); // show home joystick again
+      placeHomeJoystick(); // show home joystick again (bottom-right)
       e.preventDefault();
     }
   }
@@ -425,7 +466,7 @@ function updateStick(cx, cy){
   joyTargetVy = uy * currentSpeed;
 }
 
-/* ===== Game loop (unchanged logic + smoothing) ===== */
+/* ===== Game loop ===== */
 function checkCollisions(){
   const dx = player.x - coin.x, dy = player.y - coin.y;
   if (Math.hypot(dx,dy) < player.radius + coin.radius){
@@ -433,12 +474,10 @@ function checkCollisions(){
     if (hardMode){
       if (score % 2){
         lasers.push({ y: player.y < canvas.height/2 ? canvas.height - 5 : 0,
-                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1),
-                      height: 5, color: 'red' });
+                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' });
       } else {
         lasers.push({ x: player.x < canvas.width/2 ? canvas.width - 5 : 0,
-                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1),
-                      width: 5, color: 'red' });
+                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });
       }
     }
   }
@@ -531,7 +570,7 @@ function draw(){
 resetGame();
 runCountdown();
 
-/* Make sure home joystick shows initially on mobile */
+/* Ensure the home joystick shows initially on mobile (bottom-right) */
 if (isMobile) { placeHomeJoystick(); }
 </script>
 </body>
