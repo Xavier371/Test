@@ -7,9 +7,9 @@
   <style>
     :root{
       --canvas-size-portrait: 96vmin;   /* full but safe */
-      --canvas-size-landscape: 86vmin;  /* smaller per your request */
-      --jump-w: 20vmin;  /* a teeny bit bigger than before */
-      --jump-h: 10vmin;
+      --canvas-size-landscape: 86vmin;  /* smaller in landscape per your request */
+      --jump-w: 21vmin;  /* a teeny bit bigger */
+      --jump-h: 10.5vmin;
     }
     html, body {
       width: 100%; height: 100%;
@@ -18,31 +18,53 @@
       -webkit-tap-highlight-color: transparent;
     }
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: center;
       font-family: sans-serif;
     }
 
-    /* Layout wrapper */
+    /* ===== Layout Wrapper ===== */
     #game-enclosure {
       width: 100%;
-      max-width: 780px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
+      max-width: 820px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      position: relative;
     }
 
-    /* Title (always shown) */
+    /* ===== Title ===== */
     h1 {
-      margin: 6px 0 2px 0;
-      font-size: 24px;
-      line-height: 1.2;
+      margin: 8px 0 4px 0;
+      font-size: 24px; line-height: 1.2;
       text-align: center;
+      width: 100%;
     }
 
-    /* Controls — Restart always visible */
+    /* Portrait title pinned top/center */
+    @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
+      h1 { position: fixed; top: 6px; left: 0; right: 0; }
+      .controls { margin-top: 46px; }
+    }
+
+    /* Landscape: title top-left (fixed), controls top-right (fixed) */
+    @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
+      body { align-items: stretch; }
+      #game-enclosure { height: 100%; max-width: none; }
+
+      h1 {
+        position: fixed;
+        top: 6px; left: 10px; right: auto;
+        text-align: left;
+        z-index: 3;
+      }
+      .controls {
+        position: fixed;
+        top: 6px; right: 10px; left: auto;
+        justify-content: flex-end;
+        z-index: 3;
+      }
+    }
+
+    /* ===== Controls ===== */
     .controls {
       display: flex; gap: 8px; justify-content: center; align-items: center;
     }
@@ -54,53 +76,32 @@
     }
     button:active { background:#e0e0e0; }
 
-    /* Canvas: fully visible square; landscape smaller and centered */
+    /* ===== Canvas ===== */
     canvas {
-      display: block; margin: 0 auto;
+      display: block; margin: 0 auto 0 auto;
       width: var(--canvas-size-portrait);
       height: var(--canvas-size-portrait);
-      max-width: 560px; max-height: 560px;
+      max-width: 580px; max-height: 580px;
       border: 2px solid #000; background: #fff;
       touch-action: none;
     }
 
-    /* Desktop or generic layout keeps flow: title -> controls -> canvas */
-    /* ----- Mobile Landscape: title top, buttons bottom, grid smaller and centered ----- */
-    @media (hover: none) and (pointer: coarse) and (orientation: landscape){
-      body{
-        align-items: stretch;
-      }
-      #game-enclosure{
-        height: 100%;
-        max-width: none;
-      }
-      h1{
-        position: fixed; top: 0; left: 0; right: 0;
-        padding: 8px 0;
-        background: rgba(240,240,240,0.92);
-        backdrop-filter: blur(2px);
-        z-index: 2;
-      }
-      .controls{
-        position: fixed; bottom: 0; left: 0; right: 0;
-        padding: 8px 0 calc(8px + env(safe-area-inset-bottom)) 0;
-        background: rgba(240,240,240,0.92);
-        backdrop-filter: blur(2px);
-        z-index: 2;
-      }
+    /* Landscape: center the grid and shrink a bit */
+    @media (hover:none) and (pointer:coarse) and (orientation:landscape) {
       canvas{
         position: absolute;
         top: 50%; left: 50%;
-        transform: translate(-50%,-50%);
+        transform: translate(-50%, -50%);
         width: var(--canvas-size-landscape);
         height: var(--canvas-size-landscape);
         max-width: none; max-height: none;
+        z-index: 1;
       }
     }
 
-    /* Modal (unchanged behavior) */
+    /* ===== Modal ===== */
     #instructionsModal {
-      display:none; position:fixed; z-index:3; inset:0; background:rgba(0,0,0,0.4);
+      display:none; position:fixed; z-index:4; inset:0; background:rgba(0,0,0,0.4);
     }
     .modal-content {
       background:#fff; margin:12% auto; padding:20px; border:1px solid #888;
@@ -108,53 +109,77 @@
     }
     #closeButton { position:absolute; right:12px; top:8px; font-size:24px; cursor:pointer; }
 
-    /* ===== Mobile on-screen controls ===== */
+    /* ===== Mobile Touch UI ===== */
     .touch-ui { display: none; }
-    @media (hover: none) and (pointer: coarse){
+    @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump rectangle: a teeny bit larger, placed to look nice in portrait and landscape */
+      /* Portrait: jump bottom-left. Landscape: under the grid, slightly left of center. */
       #jumpArea{
         position: fixed;
-        left: 3vw; bottom: 7vh;       /* visually appealing offsets */
-        width: var(--jump-w); height: var(--jump-h);
-        min-width: 76px; min-height: 44px;   /* keeps usable on tiny phones */
+        z-index: 3; touch-action: none; box-sizing: border-box;
         border: 2px solid rgba(0,0,0,0.18);
-        border-radius: 12px; box-sizing: border-box;
-        background: rgba(0,0,0,0.03);
-        z-index: 4; touch-action: none;
+        border-radius: 12px; background: rgba(0,0,0,0.03);
+        width: var(--jump-w); height: var(--jump-h);
+        min-width: 78px; min-height: 44px;
       }
-      /* Right-side joystick input zone */
+      /* Portrait placement */
+      @media (orientation:portrait){
+        #jumpArea{ left: 3vw; bottom: 7vh; }
+      }
+      /* Landscape placement: right under the centered canvas, offset a bit to the left */
+      @media (orientation:landscape){
+        #jumpArea{
+          top: calc(50% + var(--canvas-size-landscape) / 2 + 2.8vh);
+          left: 50%;
+          transform: translate(-60%, 0);  /* slightly left of center */
+        }
+      }
+
+      /* Joystick input zones */
       #joystickArea{
         position: fixed; right: 0; top: 0; bottom: 0;
         width: 45vw; max-width: 520px;
-        z-index: 4; touch-action: none;
-        background: transparent;
+        z-index: 3; touch-action: none; background: transparent;
       }
-      /* Dynamic joystick visuals */
-      #joyBase, #joyStick{
+
+      /* Home joystick (always visible until drag begins) */
+      #joyHomeBase, #joyHomeStick,
+      #joyDynBase,  #joyDynStick{
         position: fixed; border-radius: 50%;
-        transform: translate(-50%,-50%); pointer-events: none; z-index: 5; display: none;
+        transform: translate(-50%, -50%);
+        pointer-events: none; z-index: 5;
       }
-      #joyBase{
+      #joyHomeBase{
         width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
-        border: 2px solid rgba(0,0,0,0.18);
-        background: rgba(0,0,0,0.04);
+        border: 2px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04);
+        display: none; /* shown only on mobile via JS after placement */
       }
-      #joyStick{
+      #joyHomeStick{
         width: 11vmin; height: 11vmin; max-width: 95px; max-height: 95px;
-        border: 2px solid rgba(0,0,0,0.22);
-        background: rgba(0,0,0,0.10);
+        border: 2px solid rgba(0,0,0,0.22); background: rgba(0,0,0,0.10);
+        display: none;
+      }
+      /* Dynamic joystick: appears where user touches; hidden on release */
+      #joyDynBase{
+        width: 24vmin; height: 24vmin; max-width: 200px; max-height: 200px;
+        border: 2px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04);
+        display: none;
+      }
+      #joyDynStick{
+        width: 11vmin; height: 11vmin; max-width: 95px; max-height: 95px;
+        border: 2px solid rgba(0,0,0,0.22); background: rgba(0,0,0,0.10);
+        display: none;
       }
     }
   </style>
 </head>
 <body>
   <div id="game-enclosure">
-    <h1>Laser Jump</h1>
+    <h1 id="title">Laser Jump</h1>
 
-    <!-- Controls: Restart always shown; Pause removed; title is above -->
-    <div class="controls">
+    <!-- Controls: Restart always visible -->
+    <div class="controls" id="controls">
       <button id="restartButton">Restart</button>
       <button id="instructionsButton">Instructions</button>
       <button id="difficultyButton">Mode: Hard</button>
@@ -166,8 +191,12 @@
   <!-- Mobile overlays -->
   <div class="touch-ui" id="jumpArea" aria-label="Jump"></div>
   <div class="touch-ui" id="joystickArea" aria-label="Joystick area"></div>
-  <div class="touch-ui" id="joyBase"></div>
-  <div class="touch-ui" id="joyStick"></div>
+  <!-- Home joystick (default spot on the side) -->
+  <div class="touch-ui" id="joyHomeBase"></div>
+  <div class="touch-ui" id="joyHomeStick"></div>
+  <!-- Dynamic joystick (appears at touch) -->
+  <div class="touch-ui" id="joyDynBase"></div>
+  <div class="touch-ui" id="joyDynStick"></div>
 
   <!-- Instructions -->
   <div id="instructionsModal">
@@ -183,7 +212,7 @@
   </div>
 
 <script>
-/* ===== Core setup (gameplay unchanged) ===== */
+/* ===== Core Game Setup (unchanged mechanics) ===== */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const restartButton = document.getElementById('restartButton');
@@ -200,7 +229,7 @@ canvas.width = canvas.height = gameResolution;
 let player = {
   x: gameResolution/2, y: gameResolution/2,
   radius: gridSize/2,
-  speed: isMobile ? 6 : 3,   // same per-frame feel
+  speed: isMobile ? 6 : 3,  // per-frame feel
   vx: 0, vy: 0,
   color: 'blue',
   isJumping: false,
@@ -242,8 +271,8 @@ difficultyButton.addEventListener('click', ()=>{
   hardMode = !hardMode;
   difficultyButton.textContent = `Mode: ${hardMode ? 'Hard' : 'Easy'}`;
 });
-instructionsButton.addEventListener('click', ()=>{ paused = true; instructionsModal.style.display='block'; });
-closeButton.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } });
+instructionsButton.addEventListener('click', ()=>{ paused=true; instructionsModal.style.display='block'; });
+closeButton?.addEventListener('click', ()=>{ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } });
 window.addEventListener('click', (e)=>{ if (e.target===instructionsModal){ instructionsModal.style.display='none'; if (paused){ paused=false; update(); } } });
 
 /* Coin */
@@ -258,16 +287,22 @@ document.addEventListener('keydown', e=>{
   if (gameOver && e.key==='Enter'){ resetGame(); startGame(); return; }
   if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
   if ((e.key===' '||e.key==='Spacebar') && !player.isJumping){
-    player.isJumping = true; player.jumpStartTime = Date.now(); player.color = 'lightblue';
+    player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
   }
 });
 document.addEventListener('keyup', e=>{ if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
 
-/* ===== Mobile on-screen controls ===== */
+/* ===== Mobile Touch Controls ===== */
 const jumpArea = document.getElementById('jumpArea');
 const joystickArea = document.getElementById('joystickArea');
-const joyBase = document.getElementById('joyBase');
-const joyStick = document.getElementById('joyStick');
+
+/* Home joystick (always shown until drag) */
+const joyHomeBase  = document.getElementById('joyHomeBase');
+const joyHomeStick = document.getElementById('joyHomeStick');
+
+/* Dynamic joystick (appears at touch point) */
+const joyDynBase  = document.getElementById('joyDynBase');
+const joyDynStick = document.getElementById('joyDynStick');
 
 let joyActive = false;
 let joyId = null;
@@ -275,41 +310,70 @@ let joyCenter = { x: 0, y: 0 };
 let joyMax = 100;                 // deflection radius
 let joyTargetVx = 0, joyTargetVy = 0; // target velocity; eased toward
 
+/* Place the "home" joystick centered on the right side */
+function placeHomeJoystick(){
+  const r = joystickArea.getBoundingClientRect();
+  const cx = r.left + r.width * 0.50;
+  const cy = r.top  + r.height * 0.50;
+  joyHomeBase.style.left  = cx + 'px';
+  joyHomeBase.style.top   = cy + 'px';
+  joyHomeStick.style.left = cx + 'px';
+  joyHomeStick.style.top  = cy + 'px';
+  // show home joystick visuals
+  joyHomeBase.style.display = 'block';
+  joyHomeStick.style.display = 'block';
+}
+/* Adjust joystick scale with viewport */
 function adjustJoyMax(){
   const unit = Math.min(window.innerWidth, window.innerHeight);
   joyMax = Math.max(80, Math.min(130, unit * 0.12));
 }
-window.addEventListener('resize', adjustJoyMax);
-if (isMobile) adjustJoyMax();
+function onResize(){
+  adjustJoyMax();
+  if (isMobile) placeHomeJoystick();
+}
+window.addEventListener('resize', onResize);
+if (isMobile) onResize();
 
 /* Jump button */
 if (isMobile){
   jumpArea.addEventListener('touchstart', ()=>{
     if (gameOver || paused) return;
     if (!player.isJumping){
-      player.isJumping = true;
-      player.jumpStartTime = Date.now();
-      player.color = 'lightblue';
+      player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
       if (navigator.vibrate) navigator.vibrate(10);
     }
   }, {passive:false});
 }
 
-/* Dynamic joystick (appears where you touch on the right side) */
+/* Dynamic joystick lifecycle */
+function showDynamicJoystick(cx, cy){
+  joyCenter.x = cx; joyCenter.y = cy;
+  joyDynBase.style.left  = cx + 'px';
+  joyDynBase.style.top   = cy + 'px';
+  joyDynStick.style.left = cx + 'px';
+  joyDynStick.style.top  = cy + 'px';
+  joyDynBase.style.display = 'block';
+  joyDynStick.style.display = 'block';
+}
+function hideDynamicJoystick(){
+  joyDynBase.style.display = 'none';
+  joyDynStick.style.display = 'none';
+}
+function hideHomeJoystick(){
+  joyHomeBase.style.display = 'none';
+  joyHomeStick.style.display = 'none';
+}
+
+/* Right-side area touch handling */
 if (isMobile){
   joystickArea.addEventListener('touchstart', e=>{
     if (gameOver || paused) return;
     const t = e.changedTouches[0];
     joyId = t.identifier; joyActive = true;
 
-    joyCenter.x = t.clientX; joyCenter.y = t.clientY;
-    joyBase.style.left = joyCenter.x + 'px';
-    joyBase.style.top  = joyCenter.y + 'px';
-    joyStick.style.left = joyCenter.x + 'px';
-    joyStick.style.top  = joyCenter.y + 'px';
-    joyBase.style.display = 'block';
-    joyStick.style.display = 'block';
-
+    hideHomeJoystick();                 // hide home joystick during drag
+    showDynamicJoystick(t.clientX, t.clientY); // show dynamic at touch point
     updateStick(t.clientX, t.clientY);
     e.preventDefault();
   }, {passive:false});
@@ -334,8 +398,8 @@ if (isMobile){
     if (ended){
       joyActive = false; joyId = null;
       joyTargetVx = 0; joyTargetVy = 0;
-      joyBase.style.display = 'none';
-      joyStick.style.display = 'none';
+      hideDynamicJoystick();
+      placeHomeJoystick(); // show home joystick again
       e.preventDefault();
     }
   }
@@ -343,6 +407,7 @@ if (isMobile){
   joystickArea.addEventListener('touchcancel', endJoystick, {passive:false});
 }
 
+/* Update dynamic stick & target velocity */
 function updateStick(cx, cy){
   const dx = cx - joyCenter.x;
   const dy = cy - joyCenter.y;
@@ -351,17 +416,16 @@ function updateStick(cx, cy){
   const ux = mag ? dx/mag : 0;
   const uy = mag ? dy/mag : 0;
 
-  joyStick.style.left = (joyCenter.x + ux * capped) + 'px';
-  joyStick.style.top  = (joyCenter.y + uy * capped) + 'px';
+  joyDynStick.style.left = (joyCenter.x + ux * capped) + 'px';
+  joyDynStick.style.top  = (joyCenter.y + uy * capped) + 'px';
 
-  // Smooth acceleration curve matching your per-frame speed
   const speedFactor = capped / joyMax;               // 0..1
   const currentSpeed = player.speed * (0.28 + 0.72 * speedFactor);
   joyTargetVx = ux * currentSpeed;
   joyTargetVy = uy * currentSpeed;
 }
 
-/* ===== Game loop (unchanged logic + joystick smoothing) ===== */
+/* ===== Game loop (unchanged logic + smoothing) ===== */
 function checkCollisions(){
   const dx = player.x - coin.x, dy = player.y - coin.y;
   if (Math.hypot(dx,dy) < player.radius + coin.radius){
@@ -369,10 +433,12 @@ function checkCollisions(){
     if (hardMode){
       if (score % 2){
         lasers.push({ y: player.y < canvas.height/2 ? canvas.height - 5 : 0,
-                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' });
+                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1),
+                      height: 5, color: 'red' });
       } else {
         lasers.push({ x: player.x < canvas.width/2 ? canvas.width - 5 : 0,
-                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });
+                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1),
+                      width: 5, color: 'red' });
       }
     }
   }
@@ -417,7 +483,7 @@ function update(){
   if (player.y < -player.radius) player.y = canvas.height + player.radius;
   if (player.y > canvas.height + player.radius) player.y = -player.radius;
 
-  // Lasers move and bounce
+  // Lasers
   for (const l of lasers){
     if (l.vy !== undefined){
       l.y += l.vy;
@@ -464,6 +530,9 @@ function draw(){
 /* Boot */
 resetGame();
 runCountdown();
+
+/* Make sure home joystick shows initially on mobile */
+if (isMobile) { placeHomeJoystick(); }
 </script>
 </body>
 </html>
