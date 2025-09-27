@@ -6,8 +6,8 @@
   <title>Laser Jump</title>
   <style>
     :root{
-      --canvas-size-portrait: 96vmin;   /* full but safe in portrait */
-      --canvas-size-landscape: 86vmin;  /* smaller in landscape, centered */
+      --canvas-size-portrait: 96vmin;   /* full but safe in portrait (mobile) */
+      --canvas-size-landscape: 86vmin;  /* smaller in landscape, centered (mobile) */
 
       --jump-w: 21vmin;
       --jump-h: 10.5vmin;
@@ -77,7 +77,7 @@
     .btn:hover { background: var(--brand-blue-dark); }
     .btn:active { transform: translateY(1px); background: var(--brand-blue-dark); }
 
-    /* ===== Canvas ===== */
+    /* ===== Canvas (default / desktop) ===== */
     canvas {
       display: block; margin: 0 auto;
       width: var(--canvas-size-portrait);
@@ -88,30 +88,41 @@
       z-index: 1;
     }
 
+    /* Make the grid a little smaller on computers (pointer:fine) */
+    @media (hover:hover) and (pointer:fine){
+      canvas{
+        width: 78vmin;
+        height: 78vmin;
+        max-width: 480px;
+        max-height: 480px;
+      }
+    }
+
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
       /* Title centered at the top */
       h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      /* Buttons: small & side-by-side directly under title */
+      /* Buttons: small & side-by-side directly under title, moved down a bit */
       .controls {
         position: fixed;
-        top: 44px; left: 0; right: 0;
+        top: 56px; /* was 44px; moved down slightly */
+        left: 0; right: 0;
         justify-content: center;
         gap: 6px;
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
-      /* Jump: move left under grid & a bit bigger */
+      /* Jump: to the left under the grid & a bit bigger than before */
       #jumpArea {
         position: fixed;
         /* left edge of grid is 50% - half canvas; nudge in by 6vw */
         left: calc(50% - var(--canvas-size-portrait) / 2 + 6vw);
         top: calc(50% + var(--canvas-size-portrait) / 2 + 3vh);
-        width: calc(var(--jump-w) * 1.25);
-        height: calc(var(--jump-h) * 1.25);
+        width: calc(var(--jump-w) * 1.33);  /* bigger */
+        height: calc(var(--jump-h) * 1.33); /* bigger */
         transform: none;
-        min-width: 96px;  /* little bigger than before */
-        min-height: 54px;
+        min-width: 100px;
+        min-height: 56px;
       }
     }
 
@@ -127,17 +138,20 @@
         text-align: left;
       }
 
-      /* ⬅️ Reverted: Buttons back to TOP-RIGHT (stacked) */
+      /* Buttons top-right (stacked), narrower so they don't overlap grid */
       .controls {
         position: fixed;
-        top: 6px; right: 10px; left: auto;
-        width: 180px;
+        top: 6px; right: 8px; left: auto;
+        width: 150px;             /* reduced from 180px */
         flex-direction: column;
         gap: 6px;
         justify-content: flex-start;
         align-items: stretch;
       }
-      .btn { font-size: 12.5px; padding: 5px 8px; }
+      .btn {
+        font-size: 12px;
+        padding: 4px 6px;         /* tighter padding */
+      }
 
       /* Grid smaller and centered */
       canvas{
@@ -150,14 +164,15 @@
         z-index: 1;
       }
 
-      /* Jump bottom-left */
+      /* Jump bottom-left, slightly bigger than before */
       #jumpArea {
         position: fixed;
         left: 2vw; bottom: 3vh;
         transform: none;
-        width: calc(var(--jump-w) * 1.15);
-        height: calc(var(--jump-h) * 1.15);
-        min-width: 90px; min-height: 50px;
+        width: calc(var(--jump-w) * 1.22);   /* slightly larger */
+        height: calc(var(--jump-h) * 1.22);  /* slightly larger */
+        min-width: 98px;
+        min-height: 54px;
       }
     }
 
@@ -176,7 +191,7 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump button base (exact size tweaked per media queries) */
+      /* Base jump button (exact size tweaked per media queries) */
       #jumpArea{
         z-index: 5; touch-action: none; box-sizing: border-box;
         width: calc(var(--jump-w) * 1.15);
