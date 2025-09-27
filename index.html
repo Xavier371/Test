@@ -39,13 +39,23 @@
       position: relative;
     }
 
-    /* ===== Title ===== */
+    /* ===== Title & tagline ===== */
     h1 {
       margin: 8px 0 4px 0;
       font-size: 24px; line-height: 1.2;
       text-align: center;
       width: 100%;
       color: #111;
+      z-index: 6;
+    }
+    .tagline {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      line-height: 1.5;
+      text-align: center;
+      color: #333;
+      max-width: 520px;
+      padding: 0 12px;
       z-index: 6;
     }
 
@@ -90,23 +100,35 @@
 
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
+      body { align-items: flex-start; }
+      #game-enclosure { padding-top: 170px; }
+
       /* Title centered at the top */
-      h1 { position: fixed; top: 6px; left: 0; right: 0; }
+      h1 { position: fixed; top: 10px; left: 0; right: 0; }
+      .tagline {
+        position: fixed;
+        top: 56px; left: 0; right: 0;
+        padding: 0 24px;
+      }
       /* Buttons: small & side-by-side directly under title */
       .controls {
         position: fixed;
-        top: 44px; left: 0; right: 0;
+        top: 116px; left: 0; right: 0;
         justify-content: center;
-        gap: 6px;
+        gap: 12px;
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
       /* Jump sits just under the grid (centered) */
       #jumpArea {
         position: fixed;
-        left: 50%;
+        left: calc(50% - var(--canvas-size-portrait) / 4);
         transform: translateX(-50%);
-        top: calc(50% + var(--canvas-size-portrait) / 2 + 2.6vh);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 7vh);
+        width: calc(var(--jump-w) * 1.2);
+        height: calc(var(--jump-h) * 1.2);
+        min-width: 90px;
+        min-height: 52px;
       }
     }
 
@@ -121,14 +143,22 @@
         top: 6px; left: 10px; right: auto;
         text-align: left;
       }
+      .tagline {
+        position: fixed;
+        top: 46px; left: 10px; right: auto;
+        text-align: left;
+        max-width: min(44vw, 320px);
+      }
 
       /* Buttons top-right (no grey background), smaller and vertical */
       .controls {
         position: fixed;
-        top: 6px; right: 10px; left: auto;
+        top: 50%; right: max(5vw, 18px); left: auto;
+        transform: translateY(-50%);
         width: 180px;
         flex-direction: column;
-        gap: 6px;
+        gap: 10px;
+        align-items: stretch;
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
@@ -146,8 +176,13 @@
       /* Jump bottom-left */
       #jumpArea {
         position: fixed;
-        left: 2vw; bottom: 3vh;
-        transform: none;
+        left: max(4vw, 24px);
+        top: 50%;
+        transform: translateY(-50%);
+        width: calc(var(--jump-w) * 1.15);
+        height: calc(var(--jump-h) * 1.15);
+        min-width: 92px;
+        min-height: 52px;
       }
     }
 
@@ -217,6 +252,7 @@
 <body>
   <div id="game-enclosure">
     <h1>Laser Jump</h1>
+    <p class="tagline">Collect coins, dodge the lasers, and time your jumps to survive the arena.</p>
 
     <!-- Buttons (portrait: side-by-side; landscape: vertical top-right) -->
     <div class="controls" id="controls">
