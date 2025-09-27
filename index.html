@@ -274,8 +274,8 @@
       <h2>How to Play</h2>
       <ul>
         <li>Desktop: arrow keys to move, Space to jump.</li>
-        <li>Mobile: right-side joystick to move (drag anywhere on the right), left jump button.</li>
-        <li>Collect coins to score; in Hard mode, each coin adds a laser.</li>
+        <li>Mobile: joystick to move, button to jump. </li>
+        <li>Collect coins to score, teleport through walls, avoid lasers.</li>
       </ul>
     </div>
   </div>
@@ -298,7 +298,7 @@ canvas.width = canvas.height = gameResolution;
 let player = {
   x: gameResolution/2, y: gameResolution/2,
   radius: gridSize/2,
-  speed: isMobile ? 6.8 : 2.6,   // ↑ a tiny bit faster on phones, ↓ a little slower on computers
+  speed: isMobile ? 6.8 : 2.6,   // a bit faster on phones, a little slower on computers
   vx: 0, vy: 0,
   color: 'blue',
   isJumping: false,
@@ -315,8 +315,8 @@ function resetGame(){
   player.x = gameResolution/2; player.y = gameResolution/2;
   player.vx = player.vy = 0; player.isJumping = false; player.color = 'blue';
   lasers = [
-    { y: 50, vy: 1.5, height: 5, color: 'red' },
-    { x: 50, vx: 1.5, width: 5,  color: 'red' }
+    { y: 50, vy: 2.2, height: 5, color: 'red' },   // faster lasers
+    { x: 50, vx: 2.2, width: 5,  color: 'red' }    // faster lasers
   ];
   score = 0; gameOver = false; paused = false;
   spawnCoin();
@@ -419,13 +419,49 @@ function onResize(){
 window.addEventListener('resize', onResize);
 if (isMobile) onResize();
 
-/* Jump button */
+/* Jump helper */
+function triggerJump(){
+  if (gameOver || paused) return;
+  if (!player.isJumping){
+    player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
+    if (navigator.vibrate) navigator.vibrate(10);
+  }
+}
+
+/* Jump button direct touch */
 if (isMobile){
-  jumpArea.addEventListener('touchstart', ()=>{
-    if (gameOver || paused) return;
-    if (!player.isJumping){
-      player.isJumping = true; player.jumpStartTime = Date.now(); player.color='lightblue';
-      if (navigator.vibrate) navigator.vibrate(10);
+  jumpArea.addEventListener('touchstart', (e)=>{
+    triggerJump();
+    e.preventDefault();
+  }, {passive:false});
+}
+
+/* NEW: Tap-near-jump proximity on mobile */
+if (isMobile){
+  document.addEventListener('touchstart', (e)=>{
+    // If joystick started this touch, let joystick handler manage it
+    // We'll only check "near jump" on single-finger taps not starting inside joystickArea
+    const t = e.changedTouches[0];
+    if (!t) return;
+
+    // If touch started in joystick area, ignore for jump-near detection
+    const jRect = joystickArea.getBoundingClientRect();
+    if (t.clientX >= jRect.left && t.clientX <= jRect.right &&
+        t.clientY >= jRect.top  && t.clientY <= jRect.bottom){
+      return; // joystick touch
+    }
+
+    // Check proximity to jump button rect with generous margin
+    const r = jumpArea.getBoundingClientRect();
+    const unit = Math.min(window.innerWidth, window.innerHeight);
+    const margin = Math.max(30, Math.min(80, unit * 0.06)); // ~6% of short side, capped
+    const near =
+      t.clientX >= (r.left - margin)  && t.clientX <= (r.right + margin) &&
+      t.clientY >= (r.top  - margin)  && t.clientY <= (r.bottom + margin);
+
+    if (near){
+      triggerJump();
+      e.preventDefault();
     }
   }, {passive:false});
 }
@@ -504,9 +540,9 @@ function updateStick(cx, cy){
   joyDynStick.style.top  = (joyCenter.y + uy * capped) + 'px';
 
   const speedFactor = capped / joyMax;               // 0..1
-  const currentSpeed = player.speed * (0.28 + 0.72 * speedFactor);
-  joyTargetVx = ux * currentSpeed;
-  joyTargetVy = uy * currentSpeed;
+  theSpeed = player.speed * (0.28 + 0.72 * speedFactor);
+  joyTargetVx = ux * theSpeed;
+  joyTargetVy = uy * theSpeed;
 }
 
 /* ===== Game loop ===== */
@@ -517,10 +553,10 @@ function checkCollisions(){
     if (hardMode){
       if (score % 2){
         lasers.push({ y: player.y < canvas.height/2 ? canvas.height - 5 : 0,
-                      vy: 1.5 * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' });
+                      vy: 2.2 * (Math.random() > 0.5 ? 1 : -1), height: 5, color: 'red' }); // faster
       } else {
         lasers.push({ x: player.x < canvas.width/2 ? canvas.width - 5 : 0,
-                      vx: 1.5 * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });
+                      vx: 2.2 * (Math.random() > 0.5 ? 1 : -1), width: 5, color: 'red' });  // faster
       }
     }
   }
