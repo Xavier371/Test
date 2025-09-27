@@ -53,7 +53,7 @@
     .controls {
       display: flex;
       gap: 8px;
-      justify-content: center;   /* centered */
+      justify-content: center;
       align-items: center;
       flex-wrap: wrap;
       width: 100%;
@@ -90,9 +90,9 @@
 
     /* ===== Portrait (mobile vertical) ===== */
     @media (hover:none) and (pointer:coarse) and (orientation:portrait) {
-      /* Title centered at the very top */
+      /* Title centered at the top */
       h1 { position: fixed; top: 6px; left: 0; right: 0; }
-      /* Buttons: small & side-by-side directly under title (centered) */
+      /* Buttons: small & side-by-side directly under title */
       .controls {
         position: fixed;
         top: 44px; left: 0; right: 0;
@@ -101,12 +101,17 @@
       }
       .btn { font-size: 12.5px; padding: 5px 8px; }
 
-      /* Jump sits just under the grid (centered) */
+      /* Jump: move left under grid & a bit bigger */
       #jumpArea {
         position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
-        top: calc(50% + var(--canvas-size-portrait) / 2 + 3.2vh);
+        /* left edge of grid is 50% - half canvas; nudge in by 6vw */
+        left: calc(50% - var(--canvas-size-portrait) / 2 + 6vw);
+        top: calc(50% + var(--canvas-size-portrait) / 2 + 3vh);
+        width: calc(var(--jump-w) * 1.25);
+        height: calc(var(--jump-h) * 1.25);
+        transform: none;
+        min-width: 96px;  /* little bigger than before */
+        min-height: 54px;
       }
     }
 
@@ -115,14 +120,14 @@
       body { align-items: stretch; }
       #game-enclosure { height: 100%; max-width: none; }
 
-      /* Title top-left (no grey background) */
+      /* Title top-left */
       h1 {
         position: fixed;
         top: 6px; left: 10px; right: auto;
         text-align: left;
       }
 
-      /* Buttons top-right (no grey background), smaller and vertical */
+      /* ⬅️ Reverted: Buttons back to TOP-RIGHT (stacked) */
       .controls {
         position: fixed;
         top: 6px; right: 10px; left: auto;
@@ -150,6 +155,9 @@
         position: fixed;
         left: 2vw; bottom: 3vh;
         transform: none;
+        width: calc(var(--jump-w) * 1.15);
+        height: calc(var(--jump-h) * 1.15);
+        min-width: 90px; min-height: 50px;
       }
     }
 
@@ -168,7 +176,7 @@
     @media (hover:none) and (pointer:coarse){
       .touch-ui{ display:block; }
 
-      /* Jump button: make a little bigger overall */
+      /* Jump button base (exact size tweaked per media queries) */
       #jumpArea{
         z-index: 5; touch-action: none; box-sizing: border-box;
         width: calc(var(--jump-w) * 1.15);
